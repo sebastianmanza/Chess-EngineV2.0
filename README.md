@@ -4,7 +4,7 @@
     An updated version of https://github.com/sebastianmanza/ChessEngine.
 
 
-TARS Chess Engine is a chess engine written from scratch in Java. It was developed by Sebastian Manza as a personal project beginning in October 2024.
+TARS Chess Engine is a chess engine written from scratch in Java. It was developed beginning in October 2024.
 
 ## Usage
 
@@ -58,5 +58,5 @@ The simulations attempt to run on multiple threads at once, for greater efficien
     - [ ] Read GameStates
 - [ ] Neural Network for Evaluation
 
-See the [open issues](https://github.com/sebastianmanza/ChessEngineV2.0/issues) for a full list of proposed features (and known issues).
+See the [open issues](https://github.com/sebastianmanza/Chess-EngineV2.0/issues) for a full list of proposed features (and known issues).
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
