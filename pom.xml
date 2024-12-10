@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <!-- The model version -->
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Project coordinates -->
+    <groupId>SebastianManza</groupId>
+    <artifactId>TARS.V2.0</artifactId>  <!-- Change this to your project artifact ID -->
+    <version>2.0</version>  <!-- Version of your project -->
+    <packaging>jar</packaging>
+
+    <!-- Name and description of the project -->
+    <name>Chess Engine</name>
+    <description>Chess engine using Monte Carlo Tree Search</description>
+
+    <!-- Properties for compiling Java -->
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>  <!-- Set to the Java version you're using -->
+        <maven.compiler.target>21</maven.compiler.target>  <!-- Set to the Java version you're using -->
+    </properties>
+
+    <!-- Dependencies for your project -->
+    <dependencies>
+        <!-- Example of adding JUnit for testing -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>32.1.2-jre</version> <!-- Use the latest version -->
+        </dependency>
+
+        <dependency>
+            <groupId>org.ejml</groupId>
+            <artifactId>ejml-all</artifactId>
+            <version>0.41</version>
+        </dependency>
+
+        <!-- Core DL4J dependency -->
+        <dependency>
+            <groupId>org.deeplearning4j</groupId>
+            <artifactId>deeplearning4j-core</artifactId>
+            <version>1.0.0-M2.1</version>
+        </dependency>
+    
+        <!-- ND4J backend (CPU) -->
+        <dependency>
+            <groupId>org.nd4j</groupId>
+            <artifactId>nd4j-native-platform</artifactId>
+            <version>1.0.0-M2.1</version>
+        </dependency>
+    </dependencies>
+
+    <!-- Build plugins -->
+    <build>
+        <plugins>
+            <!-- Exec Maven Plugin -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+
+                    <mainClass>chessEngine.TARS</mainClass>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>chessEngine.TARS</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M5</version>
+                <configuration>
+                    <forkedProcessArguments>
+                        -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
+                    </forkedProcessArguments>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
