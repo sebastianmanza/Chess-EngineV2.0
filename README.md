@@ -38,7 +38,7 @@ Magic bitboards are precomputed at the beginning phase of the game: This means p
 
 To save time during the opening phase, I have implemented an opening book.
 
-## Multithreading
+### Multithreading
 
 The simulations attempt to run on multiple threads at once, for greater efficiency. Nodes are chosen, expanded, and simulated in parallel, increasing the number of simulations for a position significantly
 
