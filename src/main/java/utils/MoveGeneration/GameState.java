@@ -1,9 +1,6 @@
 package utils.MoveGeneration;
 
 import java.util.Arrays;
-
-
-
 /**
  * An updated version of board that stores the game state in bitboards.
  * 
@@ -24,6 +21,7 @@ public class GameState {
     private static final int BPAWNS = 11;
     private static final int WPIECES = 12;
     private static final int BPIECES = 13;
+    private static final int ALLPIECES = 14;
 
     /** The bitboards */
     private long[] bitBoards = new long[15];
@@ -34,6 +32,11 @@ public class GameState {
     /** The engine color */
     private boolean engineColor;
 
+    /**
+     * Build a new Game State.
+     * @param turnColor The color of the current turn (true for white, false for black)
+     * @param engineColor The color of the engine.
+     */
     public GameState(boolean turnColor, boolean engineColor) {
         this.turnColor = turnColor;
         this.engineColor = engineColor;
@@ -63,6 +66,8 @@ public class GameState {
  
         bitBoards[WPIECES] = 0b00000000000000000000000000000000000000000000001111111111111111L;
         bitBoards[BPIECES] = 0b11111111111111110000000000000000000000000000000000000000000000L;
+
+        bitBoards[ALLPIECES] = bitBoards[WPIECES] & bitBoards[BPIECES];
     } //setBoardStartingPos()
 
     /**
@@ -75,8 +80,12 @@ public class GameState {
 
         /* Set the appropriate bit boards */
         long turnBoard = (this.turnColor) ? bitBoards[WPIECES] : bitBoards[BPIECES];
+        long oppBoard = (this.turnColor) ? bitBoards[BPIECES] : bitBoards[WPIECES];
         long knights = (this.turnColor) ? bitBoards[WKNIGHTS] : bitBoards[BKNIGHTS];
         long kings = (this.turnColor) ? bitBoards[WKING] : bitBoards[BKING];
+        long pawns = (this.turnColor) ? bitBoards[WPAWNS] : bitBoards[BPAWNS];
+        long[] pawnQuiets = (this.turnColor) ? PawnMoves.pawnQuietsW : PawnMoves.pawnQuietsB;
+        long[] pawnCaptures = (this.turnColor) ? PawnMoves.pawnCapturesW : PawnMoves.pawnCapturesB;
 
         /* Check if there is anything on the knight board. */
         while (knights != 0) {
@@ -108,7 +117,36 @@ public class GameState {
                 attackBoard &= (attackBoard - 1);
             } //while
         } //while
-   
+
+        /* Now pawns! They have some special characteristics(starting square, promotions, captures, en passant)*/
+        while(pawns != 0) {
+            /* Find the pawns to look at. */
+            int pawnSquare = Long.numberOfTrailingZeros(pawns);
+            pawns &= pawns - 1;
+
+
+            /* If the move is a quiet one (not a capture), there can't be any piece in front of it.*/
+            long attackBoard = pawnQuiets[pawnSquare] & ~bitBoards[ALLPIECES];
+            
+            /* Join the 'quiet' moves with the captures. To capture, there must  */
+            attackBoard |= (pawnCaptures[pawnSquare] & oppBoard);
+            while(attackBoard != 0) {
+                int endSquare = Long.numberOfTrailingZeros(attackBoard);
+
+                /* We have to keep in mind promotions for our last 8 squares.*/
+                if (endSquare > 56) {
+                    /* There are four different pieces our pawn could promote to. */
+                    for (int promotions = 0; promotions < 4; promotions++) {
+                        legalMoves[numMoves++] = createMove(pawnSquare, endSquare, promotions, PawnMoves.PROMOTION_FLAG);
+                    } //for
+                } else {
+                    legalMoves[numMoves++] = createMove(pawnSquare, endSquare, 0, 0);
+                } //if/else
+                
+                /* Remove the last significant bit from the attack board. */
+                attackBoard &= (attackBoard - 1);
+            } //while
+        } //while
         /* Return a dynamically sized Array */
         return Arrays.copyOfRange(legalMoves, 0, numMoves);
     } //nextMoves()
