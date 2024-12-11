@@ -104,7 +104,7 @@ public class GameState {
             long attackBoard = KingMoves.kingAttacks[kingSquare] & ~turnBoard;
 
             while (attackBoard != 0) {
-                legalMoves[numMoves++] = createMove(kingSquare, Long.numberOfTrailingZeros(kings), 0, 0);
+                legalMoves[numMoves++] = createMove(kingSquare, Long.numberOfTrailingZeros(attackBoard), 0, 0);
                 attackBoard &= (attackBoard - 1);
             } //while
         } //while
