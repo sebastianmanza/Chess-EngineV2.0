@@ -17,8 +17,8 @@
 
     <!-- Properties for compiling Java -->
     <properties>
-        <maven.compiler.source>21</maven.compiler.source>  <!-- Set to the Java version you're using -->
-        <maven.compiler.target>21</maven.compiler.target>  <!-- Set to the Java version you're using -->
+        <maven.compiler.source>21</maven.compiler.source> 
+        <maven.compiler.target>21</maven.compiler.target>
     </properties>
 
     <!-- Dependencies for your project -->
@@ -75,7 +75,7 @@
                 </executions>
                 <configuration>
 
-                    <mainClass>chessEngine.TARS</mainClass>
+                    <mainClass>engine.TARS</mainClass>
                 </configuration>
             </plugin>
 
@@ -86,7 +86,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>chessEngine.TARS</mainClass>
+                            <mainClass>engine.TARS</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

@@ -10,8 +10,8 @@ TARS Chess Engine is a chess engine written from scratch in Java. It was develop
 
 To install and build the project (assuming maven is installed), start the terminal and run:
 ```
-git clone https://github.com/sebastianmanza/ChessEngineV2.0.git
-cd ChessEngineV2.0
+git clone https://github.com/sebastianmanza/Chess-EngineV2.0.git
+cd Chess-EngineV2.0
 mvn clean compile
 mvn exec:java
 ```
@@ -36,27 +36,38 @@ Magic bitboards are precomputed at the beginning phase of the game: This means p
 
 ### Opening Book
 
-To save time during the opening phase, I have implemented an opening book.
+To save time during the opening phase, I have implemented an opening book, stored as a tree of moves that can be made.
 
 ### Multithreading
 
-The simulations attempt to run on multiple threads at once, for greater efficiency. Nodes are chosen, expanded, and simulated in parallel, increasing the number of simulations for a position significantly
+The simulations attempt to run on multiple threads at once, for greater efficiency. Nodes are chosen, expanded, simulated, and backpropagated in parallel, increasing the number of simulations for a position significantly
 
 ## Sources
 
 * [Chess Programming Wiki](https://www.chessprogramming.org/Main_Page)
+* [Magic BitBoards](https://analog-hors.github.io/site/magic-bitboards/)
+
   </p>
 </div>
 
 ## Roadmap
 
-- [ ] Calculating Moves
-    - [ ] Create magic bitboards
-    - [ ] Move generation
-- [ ] MCT Search
-- [ ] Opening Database
-    - [ ] Read GameStates
-- [ ] Neural Network for Evaluation
+- [ ] Create GameState to store boards
+    - [ ] Calculate moves
+        - [ ] Create attack maps
+        - [ ] Create magic bitboards to store
+        - [ ] Apply attack maps to current board state
+        - [ ] Remove illegal moves (where the king is in check)
+    - [ ] Apply moves to board to update
+- [ ] Update the MCT search
+    - [ ] Allow multi-threading
+    - [ ] Update move generation with new move type
+- [ ] Create an opening database
+    - [ ] Read a PGN into a GameState
+    - [ ] Create opening database tree
+- [ ] Build Neural Network to improve evaluation
+    - [ ] Generate training data
+    - [ ] Train ANN
 
 See the [open issues](https://github.com/sebastianmanza/Chess-EngineV2.0/issues) for a full list of proposed features (and known issues).
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
