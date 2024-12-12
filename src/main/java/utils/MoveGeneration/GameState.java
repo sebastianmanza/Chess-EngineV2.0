@@ -158,12 +158,14 @@ public class GameState {
                     } //for
                 } else {
                     legalMoves[numMoves++] = createMove(pawnSquare, endSquare, 0, 0);
-                } //if/else
+                } //if/else 
                 
                 /* Remove the last significant bit from the attack board. */
                 attackBoard &= (attackBoard - 1);
             } //while
         } //while
+
+        
         /* Return a dynamically sized Array */
         return Arrays.copyOfRange(legalMoves, 0, numMoves);
     } //nextMoves()
