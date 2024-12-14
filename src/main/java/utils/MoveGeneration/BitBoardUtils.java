@@ -26,4 +26,20 @@ public class BitBoardUtils {
     public static boolean isBitSet(long bitboard, int square) {
         return (bitboard & setBit(square)) != 0;
     } // isBitSet(long, int)
+
+    public static void printBitboard(long bitboard) {
+        for (int row = 7; row >= 0; row--) {
+            for (int col = 0; col < 8; col++) {
+                int square = row * 8 + col;
+                if ((bitboard & (1L << square)) != 0) {
+                    System.out.print("X ");
+                } else {
+                    System.out.print(". ");
+                }
+            }
+            System.out.println();
+        }
+        System.out.println();
+    }
+    
 } // BitBoardUtils

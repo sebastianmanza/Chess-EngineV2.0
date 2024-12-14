@@ -39,6 +39,19 @@ public class PawnMoves {
 
   public static long[] pawnStartsB = generateStartMapsBPawn();
 
+  public static final boolean[] WHITE_START_ROW = new boolean[64];
+  public static final boolean[] BLACK_START_ROW = new boolean[64];
+  public static final boolean[] WHITE_PROMOTION_ROW = new boolean[64];
+  public static final boolean[] BLACK_PROMOTION_ROW = new boolean[64];
+
+  static {
+    for (int square = 0; square < 64; square++) {
+        WHITE_START_ROW[square] = (square >= 8 && square < 16);
+        BLACK_START_ROW[square] = (square >= 48 && square < 56);
+        WHITE_PROMOTION_ROW[square] = (square >= 56);
+        BLACK_PROMOTION_ROW[square] = (square < 8);
+    }
+}
 
   /**
    * Generate capture maps for pawns for all 64 squares;
@@ -47,7 +60,7 @@ public class PawnMoves {
    */
   private static long[] generateCaptureMapsWPawn() {
     long[] attacks = new long[64];
-    for (int square = 8; square < 56; square++) {
+    for (int square = 0; square < 64; square++) {
       attacks[square] = generateCaptureMoveWPawn(square);
     } //for
     return attacks;
@@ -60,7 +73,7 @@ public class PawnMoves {
    */
   private static long[] generateStartMapsWPawn() {
     long[] attacks = new long[64];
-    for (int square = 8; square < 56; square++) {
+    for (int square = 0; square < 64; square++) {
       attacks[square] = generateStartMovesWPawn(square);
     } //for
     return attacks;
@@ -68,7 +81,7 @@ public class PawnMoves {
 
   private static long[] generateCaptureMapsBPawn() {
     long[] attacks = new long[64];
-    for (int square = 8; square < 56; square++) {
+    for (int square = 0; square < 64; square++) {
       attacks[square] = generateCaptureMoveBPawn(square);
     } //for
     return attacks;
@@ -81,7 +94,7 @@ public class PawnMoves {
    */
   private static long[] generateStartMapsBPawn() {
     long[] attacks = new long[64];
-    for (int square = 8; square < 56; square++) {
+    for (int square = 0; square < 64; square++) {
       attacks[square] = generateStartMovesBPawn(square);
     } //for
     return attacks;
@@ -94,7 +107,7 @@ public class PawnMoves {
    */
   private static long[] generateQuietMapsWPawn() {
     long[] attacks = new long[64];
-    for (int square = 8; square < 56; square++) {
+    for (int square = 0; square < 64; square++) {
       attacks[square] = generateQuietMoveWPawn(square);
     } // for
     return attacks;
@@ -107,7 +120,7 @@ public class PawnMoves {
    */
   private static long[] generateQuietMapsBPawn() {
     long[] attacks = new long[64];
-    for (int square = 8; square < 56; square++) {
+    for (int square = 0; square < 64; square++) {
       attacks[square] = generateQuietMoveBPawn(square);
     } // for
     return attacks;
