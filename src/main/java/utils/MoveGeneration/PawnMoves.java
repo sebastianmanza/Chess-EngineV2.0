@@ -10,6 +10,8 @@ public class PawnMoves {
   /** The promotion flag */
   public static final int PROMOTION_FLAG = 1;
 
+  public static final int EN_PASSANT_FLAG = 3;
+
   /**
    * An array of pawn quiet squares, with the index corresponding to the starting
    * square.

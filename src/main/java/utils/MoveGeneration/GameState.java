@@ -2,6 +2,8 @@ package utils.MoveGeneration;
 
 import java.util.Arrays;
 
+import utils.UserInterface.UIUtils;
+
 /**
  * An updated version of board that stores the game state in bitboards. (And
  * performs some operations)
@@ -39,6 +41,9 @@ public class GameState {
     public boolean whiteQueenSide;
     public boolean blackKingSide;
     public boolean blackQueenSide;
+
+    /* En Passang */
+    public int enPassant = -1;
 
     /**
      * Build a new Game State.
@@ -183,7 +188,8 @@ public class GameState {
              * Join the 'quiet' moves with the captures. To capture, there must be a piece
              * from the opponent in that slot.
              */
-            attackBoard |= (pawnCaptures[pawnSquare] & oppBoard);
+            long oppBoardEnPassant = (this.enPassant == -1) ? oppBoard : oppBoard | BitBoardUtils.setBit(this.enPassant);
+            attackBoard |= (pawnCaptures[pawnSquare] & oppBoardEnPassant);
             while (attackBoard != 0) {
                 int endSquare = Long.numberOfTrailingZeros(attackBoard);
 
@@ -199,6 +205,9 @@ public class GameState {
                     } // for
                 } else {
                     legalMoves[numMov++] = MoveGen.moves[pawnSquare][endSquare];
+                    if (Math.abs(pawnSquare - endSquare) == 16) {
+                        legalMoves[numMov] |= ((PawnMoves.EN_PASSANT_FLAG & 0b11) << 12);
+                    } //if
                 }
                 /* Remove the last significant bit from the attack board. */
                 attackBoard &= (attackBoard - 1);
@@ -410,6 +419,13 @@ public class GameState {
 
         /* parse the caslting rights */
         this.setCastlingRights(parts[2]);
+
+        /* Parse the en passant square */
+        if (parts[3].equals("-")) {
+            this.enPassant = -1;
+        } else {
+            this.enPassant = UIUtils.toSquareIndex(parts[3]);
+        }
     } // setBoardFEN
 
     /**

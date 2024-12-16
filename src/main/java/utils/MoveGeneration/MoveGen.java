@@ -139,6 +139,7 @@ public class MoveGen {
                 break;
         }
 
+        
 
 
         int turnBoard = (state.turnColor) ? GameState.WPIECES : GameState.BPIECES;
@@ -157,6 +158,22 @@ public class MoveGen {
         state.bitBoards[GameState.ALLPIECES] |= destMask;
         state.bitBoards[oppBoard] &= ~destMask;
 
+    /* Handle En Passant */
+    if (state.enPassant != -1) {
+        if (pieceType == GameState.WPAWNS || pieceType == GameState.BPAWNS) {
+            int originSquare = Long.numberOfTrailingZeros(origMask);
+        int destSquare = Long.numberOfTrailingZeros(destMask);
+
+        if (destSquare == state.enPassant) {
+            int capturedSquare = destSquare + (state.turnColor ? -8 : 8);
+            long capturedMask = BitBoardUtils.setBit(capturedSquare);
+
+            state.bitBoards[state.turnColor ? GameState.BPAWNS : GameState.WPAWNS] &= ~capturedMask;
+            state.bitBoards[oppBoard] &= ~capturedMask;
+            state.bitBoards[GameState.ALLPIECES] &= ~capturedMask;
+        }
+        } 
+    } 
         /* Handle promotion moves */
         if (moveParts[move][3] == PawnMoves.PROMOTION_FLAG) {
             int promType = (int) moveParts[move][2];
@@ -177,6 +194,7 @@ public class MoveGen {
                     case 3 -> state.bitBoards[GameState.BQUEEN] |= destMask;
                 } // switch
             } // if/else
+            state.enPassant = -1;
         } // if its a promotion
         else {
             if (moveParts[move][2] == KingMoves.CASTLE_FLAG) {
@@ -214,6 +232,16 @@ public class MoveGen {
                 state.bitBoards[GameState.ALLPIECES] = state.bitBoards[GameState.WPIECES]
                         | state.bitBoards[GameState.BPIECES];
             } // castlingmoves
+            /* If it was a starting pawn move, the en passant flag should be raised. */
+            if (moveParts[move][2] == PawnMoves.EN_PASSANT_FLAG) {
+                if (origSquare < 16) {
+                    state.enPassant = origSquare + 8;
+                } else {
+                    state.enPassant = origSquare - 8;
+                }
+            } else {
+                state.enPassant = -1;
+            }
         } // if/else
         /* If it is a check, notify the user by returning null. */
         if (!state.isLegal(state.turnColor)) {

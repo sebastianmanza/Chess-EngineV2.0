@@ -37,7 +37,7 @@ public class TARS {
             /* Create a new board. */
             GameState playingBoard = new GameState(true, engineColor);
             //String fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-            String fen = "3rkbnr/Rp2qppp/2n5/3p1b2/8/1PP2P2/3PP1PP/3QKBNR w Kk - 1 13";
+            String fen = "rnbqkbnr/ppp1p1pp/3p4/4Pp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3";
             //String fen = "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4";
             playingBoard.setBoardFEN(fen);
             //playingBoard.setBoardStartingPos();
