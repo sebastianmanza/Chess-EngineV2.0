@@ -35,8 +35,8 @@ public class TARS {
 
         /* Create a new board. */
         GameState playingBoard = new GameState(true, engineColor);
-        //String fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-        String fen = "2kr1b1r/pppbqppp/2n5/3pp1Pn/8/P2PKP2/1PP1P2P/RNBQ1BNR w - - 1 10";
+        String fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+        //String fen = "rnR5/1p4pr/p1kb4/2p3p1/7p/8/PPP4P/2K5 b - - 0 34";
         playingBoard.setBoardFEN(fen);
         //playingBoard.setBoardStartingPos();
         /* The starting and ending squares */
@@ -52,7 +52,7 @@ public class TARS {
         input = "";
 
         /* If the engine is black. */
-        if (playingBoard.engineColor == false) {
+        if (playingBoard.engineColor == false && playingBoard.turnColor == true) {
             playingBoard.printBoard();
 
             /* Prompt for squares */

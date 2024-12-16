@@ -2,11 +2,6 @@ package utils.MoveGeneration;
 
 /**
  * The class generating predetermined pawn moves.
- * Bug note: A starting pawn move can't be premapped because there could be a piece in the way
- * However we can generate it during GameState.
- * 
- * Maybe we should add a new long[] representing just those starting move options, that we can then
- * check in gameState
  * 
  * @author Sebastian Manza
  */
@@ -16,22 +11,26 @@ public class PawnMoves {
   public static final int PROMOTION_FLAG = 1;
 
   /**
-   * An array of pawn quiet squares, with the index corresponding to the starting square.
+   * An array of pawn quiet squares, with the index corresponding to the starting
+   * square.
    */
   public static long[] pawnQuietsW = generateQuietMapsWPawn();
 
   /**
-   * An array of pawn quiet squares, with the index corresponding to the starting square.
+   * An array of pawn quiet squares, with the index corresponding to the starting
+   * square.
    */
   public static long[] pawnQuietsB = generateQuietMapsBPawn();
 
   /**
-   * An array of pawn capture squares, with the index corresponding to the starting square.
+   * An array of pawn capture squares, with the index corresponding to the
+   * starting square.
    */
   public static long[] pawnCapturesW = generateCaptureMapsWPawn();
 
   /**
-   * An array of pawn capture squares, with the index corresponding to the starting square.
+   * An array of pawn capture squares, with the index corresponding to the
+   * starting square.
    */
   public static long[] pawnCapturesB = generateCaptureMapsBPawn();
 
@@ -46,12 +45,12 @@ public class PawnMoves {
 
   static {
     for (int square = 0; square < 64; square++) {
-        WHITE_START_ROW[square] = (square >= 8 && square < 16);
-        BLACK_START_ROW[square] = (square >= 48 && square < 56);
-        WHITE_PROMOTION_ROW[square] = (square >= 56);
-        BLACK_PROMOTION_ROW[square] = (square < 8);
+      WHITE_START_ROW[square] = (square >= 8 && square < 16);
+      BLACK_START_ROW[square] = (square >= 48 && square < 56);
+      WHITE_PROMOTION_ROW[square] = (square >= 56);
+      BLACK_PROMOTION_ROW[square] = (square < 8);
     }
-}
+  }
 
   /**
    * Generate capture maps for pawns for all 64 squares;
@@ -62,11 +61,11 @@ public class PawnMoves {
     long[] attacks = new long[64];
     for (int square = 0; square < 64; square++) {
       attacks[square] = generateCaptureMoveWPawn(square);
-    } //for
+    } // for
     return attacks;
-  } //generateCaptureMapsWPawn
+  } // generateCaptureMapsWPawn
 
-    /**
+  /**
    * Generate capture maps for pawns for all 64 squares;
    * 
    * @return An array of 64 longs representing pawn capture maps
@@ -75,19 +74,19 @@ public class PawnMoves {
     long[] attacks = new long[64];
     for (int square = 0; square < 64; square++) {
       attacks[square] = generateStartMovesWPawn(square);
-    } //for
+    } // for
     return attacks;
-  } //generateCaptureMapsWPawn
+  } // generateCaptureMapsWPawn
 
   private static long[] generateCaptureMapsBPawn() {
     long[] attacks = new long[64];
     for (int square = 0; square < 64; square++) {
       attacks[square] = generateCaptureMoveBPawn(square);
-    } //for
+    } // for
     return attacks;
-  } //generateCaptureMapsWPawn
+  } // generateCaptureMapsWPawn
 
-      /**
+  /**
    * Generate capture maps for pawns for all 64 squares;
    * 
    * @return An array of 64 longs representing pawn capture maps
@@ -96,9 +95,9 @@ public class PawnMoves {
     long[] attacks = new long[64];
     for (int square = 0; square < 64; square++) {
       attacks[square] = generateStartMovesBPawn(square);
-    } //for
+    } // for
     return attacks;
-  } //generateCaptureMapsWPawn
+  } // generateCaptureMapsWPawn
 
   /**
    * Generate quiet maps for pawns for all 64 squares.
@@ -169,9 +168,9 @@ public class PawnMoves {
       int col = square % 8;
       int endingCol = endingSquare % 8;
       if (endingSquare < 64 && endingSquare >= 0 && (Math.abs(endingCol - col) == 1)) {
-      bitboard |= 1L << endingSquare;
-      } //if
-    } //for
+        bitboard |= 1L << endingSquare;
+      } // if
+    } // for
     return bitboard;
   } // generateQuietMoveWPawn
 
@@ -184,12 +183,10 @@ public class PawnMoves {
       int col = square % 8;
       int endingCol = endingSquare % 8;
       if (endingSquare < 64 && endingSquare >= 0 && (Math.abs(endingCol - col) == 1)) {
-      bitboard |= 1L << endingSquare;
-      } //if
-    } //for
+        bitboard |= 1L << endingSquare;
+      } // if
+    } // for
     return bitboard;
   } // generateQuietMoveWPawn
-
-
 
 } // PawnMoves

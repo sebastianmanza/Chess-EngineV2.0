@@ -39,16 +39,16 @@ public class MCTNode {
     /** Has the board been given children? */
     public boolean isExpanded;
 
+    /** The most recent move played */
     public short move;
-
-
 
     /**
      * Create a new Monte Carlo node for use in the tree
-     * @param curState The current board.
+     * 
+     * @param curState   The current board.
      * @param parentNode The node that came before
      */
-    public MCTNode (GameState curState, MCTNode parentNode) {
+    public MCTNode(GameState curState, MCTNode parentNode) {
         this.state = curState;
         this.wins = new AtomicDouble(0.0);
         this.playOuts = new AtomicInteger(0);
@@ -56,14 +56,14 @@ public class MCTNode {
         this.nextMoves = new ConcurrentLinkedQueue<>();
         this.isExpanded = false;
         this.move = 0;
-    } //MCNode(Board, MCNode)
+    } // MCNode(Board, MCNode)
 
     /**
      * Add a new child to the node.
+     * 
      * @param childNode The childNode to be added.
      */
     public void newChild(MCTNode childNode) {
         this.nextMoves.offer(childNode);
-    } //newChild(MCTNode)
-
-}
+    } // newChild(MCTNode)
+} // MCTNode

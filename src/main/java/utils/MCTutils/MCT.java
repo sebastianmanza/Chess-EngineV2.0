@@ -84,7 +84,8 @@ public class MCT {
         if (printScenarios) {
             printLikelyScenario(root);
             printMoveChoices(root);
-            pen.println("Simulated " + root.playOuts.get() + " games. Simulated win rate: " + (bestNode.wins.get() / bestNode.playOuts.get() * 100));
+            pen.println("Simulated " + root.playOuts.get() + " games. Simulated win rate: "
+                    + (bestNode.wins.get() / bestNode.playOuts.get() * 100));
         } // if
         /* Return the move. */
         return bestNode;
@@ -224,7 +225,8 @@ public class MCT {
             }
             if (depth++ > 50) {
                 double eval = Evaluate.evaluate(gameState);
-                return eval;            }
+                return eval;
+            }
         }
     }
 
@@ -275,15 +277,18 @@ public class MCT {
         } // while
     } // printLikelyScenario(PrintWriter, MCTNode)
 
+    /**
+     * Print the move choices ranked from worst to best stemming from the root.
+     */
     private static void printMoveChoices(MCTNode root) {
         int size = root.nextMoves.size();
         for (int i = 0; i < size; i++) {
             MCTNode worst = Collections.min(root.nextMoves, Comparator.comparingInt(n -> n.playOuts.get()));
             System.out.printf(
                     "Move: %s | Win rate: %.2f | Playouts: %d\n",
-                    UIUtils.toNotation(worst.move), ((worst.wins.get() / worst.playOuts.get()) * 100), worst.playOuts.get());
+                    UIUtils.toNotation(worst.move), ((worst.wins.get() / worst.playOuts.get()) * 100),
+                    worst.playOuts.get());
             root.nextMoves.remove(worst);
         } // for
-    }
-
+    } // printMoveChoices
 } // MCT

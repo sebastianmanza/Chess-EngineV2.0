@@ -1,17 +1,10 @@
 package utils.MoveGeneration;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 
 /**
- * An updated version of board that stores the game state in bitboards.
- * 
+ * An updated version of board that stores the game state in bitboards. (And
+ * performs some operations)
  * 
  * @author Sebastian Manza
  */
@@ -239,10 +232,20 @@ public class GameState {
         return Arrays.copyOfRange(legalMoves, 0, numMov);
     } // nextMoves()
 
+    /**
+     * Return the opposite color of the engine.
+     * 
+     * @return true if white, else false
+     */
     public boolean oppEngineColor() {
         return !this.engineColor;
-    }
+    } // oppEngineColor
 
+    /**
+     * Return the victory points of a position.
+     * 
+     * @return 1 if a win, 0.5 if a draw, and 0 if a loss
+     */
     public double vicPoints() {
         if (isLegal(this.engineColor) && !isLegal(this.oppEngineColor())) {
             return 1.0;
@@ -250,12 +253,23 @@ public class GameState {
             return 0.0;
         } // if
         return 0.5;
-    }
+    } // vicPoints()
 
+    /**
+     * Count the number of pieces on the board.
+     * 
+     * @return an integer representing the number of pieces
+     */
     public int numPieces() {
         return Long.bitCount(this.bitBoards[ALLPIECES]);
-    }
+    } // numPieces
 
+    /**
+     * Check if a board state is legal (king is not in check)
+     * 
+     * @param color The color to check the legality of.
+     * @return true if the position is legal for that color, else false
+     */
     public boolean isLegal(boolean color) {
         int kingColor = (color) ? WKING : BKING;
         int kingSquare = Long.numberOfTrailingZeros(this.bitBoards[kingColor]);
@@ -268,7 +282,7 @@ public class GameState {
         long[] pawnCaps = (kingColor == WKING) ? PawnMoves.pawnCapturesW : PawnMoves.pawnCapturesB;
         if (kingSquare == 64) {
             return false;
-        }
+        } // if
         /* Move the king like a knight. If it hits knights its in check. */
         long attackBoard = KnightMoves.knightAttacks[kingSquare];
         if ((attackBoard & oppKnight) != 0) {
@@ -283,7 +297,7 @@ public class GameState {
         attackBoard = SlideMoves.slideAttacks(kingSquare, this.bitBoards[ALLPIECES], SlideMoves.RookAttacks);
         if ((attackBoard & (oppRook | oppQueen)) != 0) {
             return false;
-        }
+        } // if
         /*
          * Move the king like a pawn of the opposite color that is capturing. If it hits
          * opp color pawns its in check.
@@ -291,7 +305,7 @@ public class GameState {
         attackBoard = pawnCaps[kingSquare];
         if ((attackBoard & oppPawn) != 0) {
             return false;
-        }
+        } // if
         /*
          * Can't forget to move the other king or the whole thing doesn't work and
          * throws
@@ -300,14 +314,22 @@ public class GameState {
         attackBoard = KingMoves.kingAttacks[kingSquare];
         if ((attackBoard & oppKing) != 0) {
             return false;
-        }
+        } // if
         return true;
-    }
+    } // isLegal(boolean)
 
+    /**
+     * Get the opposite color of the turn.
+     * 
+     * @return true if opposite color is white, else false
+     */
     public boolean oppColor() {
         return !this.turnColor;
-    }
+    } // oppColor
 
+    /**
+     * Print the board out.
+     */
     public void printBoard() {
         for (int row = 7; row >= 0; row--) {
             for (int col = 0; col < 8; col++) {
@@ -339,27 +361,40 @@ public class GameState {
                     System.out.print("\u265A ");
                 } else {
                     System.out.print(". ");
-                }
-            }
+                } // if/else
+            } // for
             System.out.println();
-        }
+        } // for
         System.out.println();
-    }
+    } // printBoard()
 
+    /**
+     * Set a board according to an FEN.
+     * What a nice file format.
+     * 
+     * @param FEN the position represented as a FEN
+     */
     public void setBoardFEN(String FEN) {
 
+        /* Split the parts of the FEN */
         String[] parts = FEN.split(" ");
         if (parts.length != 6) {
             throw new IllegalArgumentException("Invalid FEN string: " + FEN);
-        }
+        } // if
 
         /* Parse the board */
         this.setPieces(parts[0]);
 
         /* Parse the turnColor */
         this.turnColor = parts[1].equals("w");
-    }
+    } // setBoardFEN
 
+    /**
+     * Set the pieces as according to the portion of a FEN string that is piece
+     * placement.
+     * 
+     * @param piecePlacement the string representing pieces placement
+     */
     public void setPieces(String piecePlacement) {
         /* Clear all of the bitBoards */
         Arrays.fill(bitBoards, 0L);
@@ -367,13 +402,17 @@ public class GameState {
         int square = 56;
         for (char c : piecePlacement.toCharArray()) {
             if (c == '/') {
-                square -= 16; // Move to the next rank
+                /*
+                 * We move 16 because we have gone past the edge of the square and must go two
+                 * rows back
+                 */
+                square -= 16;
             } else if (Character.isDigit(c)) {
                 square += (c - '0'); // Skip empty squares
             } else {
                 long bit = 1L << square;
 
-                // Add to the appropriate bitboard
+                /* Add to the correct bitboards */
                 switch (c) {
                     case 'P' -> bitBoards[WPAWNS] |= bit;
                     case 'N' -> bitBoards[WKNIGHTS] |= bit;
@@ -388,13 +427,15 @@ public class GameState {
                     case 'q' -> bitBoards[BQUEEN] |= bit;
                     case 'k' -> bitBoards[BKING] |= bit;
                     default -> throw new IllegalArgumentException("Invalid piece: " + c);
-                }
+                } // switch
                 square++;
-            }
-        }
-        bitBoards[WPIECES] = bitBoards[WPAWNS] | bitBoards[WBISHOPS] | bitBoards[WKNIGHTS] | bitBoards[WROOKS] | bitBoards[WKING] | bitBoards[WQUEEN];
-        bitBoards[BPIECES] = bitBoards[BPAWNS] | bitBoards[BBISHOPS] | bitBoards[BKNIGHTS] | bitBoards[BROOKS] | bitBoards[BKING] | bitBoards[BQUEEN];
+            } // if/else
+        } // for
+        /* Update the big bitboards */
+        bitBoards[WPIECES] = bitBoards[WPAWNS] | bitBoards[WBISHOPS] | bitBoards[WKNIGHTS] | bitBoards[WROOKS]
+                | bitBoards[WKING] | bitBoards[WQUEEN];
+        bitBoards[BPIECES] = bitBoards[BPAWNS] | bitBoards[BBISHOPS] | bitBoards[BKNIGHTS] | bitBoards[BROOKS]
+                | bitBoards[BKING] | bitBoards[BQUEEN];
         bitBoards[ALLPIECES] = bitBoards[WPIECES] | bitBoards[BPIECES];
-    }
-
-}
+    } // setPieces(String)
+} // GameState

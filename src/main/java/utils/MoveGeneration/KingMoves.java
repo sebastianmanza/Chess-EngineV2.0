@@ -12,6 +12,7 @@ public class KingMoves {
      */
     public static long[] kingAttacks = generateAttackMapsKing();
 
+    /** The flag in a move representing that it is a castle. */
     public static final int CASTLE_FLAG = 2;
 
     /**

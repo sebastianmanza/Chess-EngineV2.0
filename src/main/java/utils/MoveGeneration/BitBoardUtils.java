@@ -27,6 +27,9 @@ public class BitBoardUtils {
         return (bitboard & setBit(square)) != 0;
     } // isBitSet(long, int)
 
+    /**
+     * Print the bitboard.
+     */
     public static void printBitboard(long bitboard) {
         for (int row = 7; row >= 0; row--) {
             for (int col = 0; col < 8; col++) {
@@ -35,11 +38,10 @@ public class BitBoardUtils {
                     System.out.print("X ");
                 } else {
                     System.out.print(". ");
-                }
+                } // if/else
             }
             System.out.println();
-        }
+        } // for
         System.out.println();
-    }
-    
+    } // for
 } // BitBoardUtils
