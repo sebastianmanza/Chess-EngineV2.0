@@ -8,7 +8,7 @@ import java.util.Scanner;
 import utils.MCTutils.Engine;
 
 public class TARSUCI {
-    
+
     /** A boolean to represent if the engine should be running */
     private static boolean running = true;
 
@@ -19,14 +19,13 @@ public class TARSUCI {
     private static final PrintWriter pen = new PrintWriter(System.out, true);
 
     public static void main(String[] args) {
-        /* Scan the input */
-        Scanner input = new Scanner(new InputStreamReader(System.in, StandardCharsets.UTF_8));
-        while (running) {
-            /* Take in a command and deal with it */
-            String command = input.nextLine().trim();
-            handleCommand(command);
-        } //while
-        input.close();
+        try ( /* Scan the input */ Scanner input = new Scanner(new InputStreamReader(System.in, StandardCharsets.UTF_8))) {
+            while (running) {
+                /* Take in a command and deal with it */
+                String command = input.nextLine().trim();
+                handleCommand(command);
+            } //while
+        }
     } //main(String[])
 
     /**

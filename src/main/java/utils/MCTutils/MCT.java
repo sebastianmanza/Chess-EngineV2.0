@@ -25,8 +25,6 @@ public class MCT {
     /** The exploration parameter, used to balance exploration vs exploitation */
     private static final double EXPLORATION_PARAM = 0.8;
 
-    private static final double WINNING_THRESHOLD = 0.8;
-
     /** The root node of the move. (i.e. the move we are exploring from) */
     MCTNode root;
 
@@ -65,7 +63,6 @@ public class MCT {
                     double winPoints = simulate(expandedNode);
                     backPropagate(expandedNode, winPoints);
                 } catch (Exception e) {
-                    e.printStackTrace();
                 } // try/catch
             } // while
         };

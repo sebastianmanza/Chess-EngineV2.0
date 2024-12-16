@@ -34,6 +34,12 @@ public class GameState {
     /** The engine color */
     public boolean engineColor;
 
+    /** The castling rights. */
+    public boolean whiteKingSide;
+    public boolean whiteQueenSide;
+    public boolean blackKingSide;
+    public boolean blackQueenSide;
+
     /**
      * Build a new Game State.
      * 
@@ -44,11 +50,19 @@ public class GameState {
     public GameState(boolean turnColor, boolean engineColor) {
         this.turnColor = turnColor;
         this.engineColor = engineColor;
+        this.blackKingSide = true;
+        this.whiteKingSide = true;
+        this.blackQueenSide = true;
+        this.whiteQueenSide = true;
     } // GameState(boolean, boolean)
 
     public GameState(GameState state) {
         this.turnColor = state.turnColor;
         this.engineColor = state.engineColor;
+        this.blackKingSide = state.blackKingSide;
+        this.whiteKingSide = state.whiteKingSide;
+        this.blackQueenSide = state.blackQueenSide;
+        this.whiteQueenSide = state.whiteQueenSide;
         this.bitBoards = Arrays.copyOf(state.bitBoards, state.bitBoards.length);
     }
 
@@ -127,6 +141,14 @@ public class GameState {
 
             /* Generate king moves. It can't eat our pieces. */
             long attackBoard = KingMoves.kingAttacks[kingSquare] & ~turnBoard;
+
+            if (MoveGen.canCastleKingSide(this)) {
+                legalMoves[numMov++] = MoveGen.createMove(kingSquare, kingSquare + 2, KingMoves.CASTLE_FLAG, 0);
+            }
+
+            if (MoveGen.canCastleQueenSide(this)) {
+                legalMoves[numMov++] = MoveGen.createMove(kingSquare, kingSquare - 2, KingMoves.CASTLE_FLAG, 0);
+            }
 
             while (attackBoard != 0) {
                 legalMoves[numMov++] = MoveGen.moves[kingSquare][Long.numberOfTrailingZeros(attackBoard)];
@@ -306,16 +328,14 @@ public class GameState {
         if ((attackBoard & oppPawn) != 0) {
             return false;
         } // if
+// if
         /*
          * Can't forget to move the other king or the whole thing doesn't work and
          * throws
          * an indexOutOfBoundException
          */
         attackBoard = KingMoves.kingAttacks[kingSquare];
-        if ((attackBoard & oppKing) != 0) {
-            return false;
-        } // if
-        return true;
+        return (attackBoard & oppKing) == 0;
     } // isLegal(boolean)
 
     /**
@@ -387,6 +407,9 @@ public class GameState {
 
         /* Parse the turnColor */
         this.turnColor = parts[1].equals("w");
+
+        /* parse the caslting rights */
+        this.setCastlingRights(parts[2]);
     } // setBoardFEN
 
     /**
@@ -438,4 +461,16 @@ public class GameState {
                 | bitBoards[BKING] | bitBoards[BQUEEN];
         bitBoards[ALLPIECES] = bitBoards[WPIECES] | bitBoards[BPIECES];
     } // setPieces(String)
+
+    /**
+ * Set castling rights according to the FEN castling string.
+ * 
+ * @param castling the string representing castling rights
+ */
+private void setCastlingRights(String castling) {
+    this.whiteKingSide = castling.contains("K");
+    this.whiteQueenSide = castling.contains("Q");
+    this.blackKingSide = castling.contains("k");
+    this.blackQueenSide = castling.contains("q");
+}
 } // GameState

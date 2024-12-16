@@ -86,7 +86,6 @@ public class Engine {
             MCTNode bestState = gameTree.search(time, false);
             return bestState == null ? "0000" : UIUtils.moveToUCI(bestState.move);
         } catch (Exception e) {
-            e.printStackTrace();
             return "0000"; // Fallback to null move
         } // try/catch
     } // search(int, int, int, int, int, int)

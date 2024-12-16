@@ -42,6 +42,7 @@ public class MCTNode {
     /** The most recent move played */
     public short move;
 
+
     /**
      * Create a new Monte Carlo node for use in the tree
      * 
@@ -56,6 +57,7 @@ public class MCTNode {
         this.nextMoves = new ConcurrentLinkedQueue<>();
         this.isExpanded = false;
         this.move = 0;
+
     } // MCNode(Board, MCNode)
 
     /**
@@ -66,4 +68,5 @@ public class MCTNode {
     public void newChild(MCTNode childNode) {
         this.nextMoves.offer(childNode);
     } // newChild(MCTNode)
+
 } // MCTNode
