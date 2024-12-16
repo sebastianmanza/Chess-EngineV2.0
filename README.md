@@ -46,28 +46,29 @@ The simulations attempt to run on multiple threads at once, for greater efficien
 
 * [Chess Programming Wiki](https://www.chessprogramming.org/Main_Page)
 * [Magic BitBoards](https://analog-hors.github.io/site/magic-bitboards/)
+* [CNN in DL4J](https://www.baeldung.com/java-cnn-deeplearning4j)
 
   </p>
 </div>
 
 ## Roadmap
 
-- [ ] Create GameState to store boards
-    - [ ] Calculate moves
-        - [ ] Create attack maps
+- [X] Create GameState to store boards
+    - [X] Calculate moves
+        - [X] Create attack maps
         - [ ] Create magic bitboards to store
-        - [ ] Apply attack maps to current board state
-        - [ ] Remove illegal moves (where the king is in check)
-    - [ ] Apply moves to board to update
-- [ ] Update the MCT search
-    - [ ] Allow multi-threading
-    - [ ] Update move generation with new move type
+        - [X] Apply attack maps to current board state
+        - [X] Remove illegal moves (where the king is in check)
+    - [X] Apply moves to board to update
+- [X] Update the MCT search
+    - [X] Allow multi-threading
+    - [X] Update move generation with new move type
 - [ ] Create an opening database
     - [ ] Read a PGN into a GameState
     - [ ] Create opening database tree
 - [ ] Build Neural Network to improve evaluation
     - [ ] Generate training data
-    - [ ] Train ANN
+    - [ ] Train CNN
 
 See the [open issues](https://github.com/sebastianmanza/Chess-EngineV2.0/issues) for a full list of proposed features (and known issues).
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
