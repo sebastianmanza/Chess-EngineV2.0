@@ -39,6 +39,8 @@ public class MCTNode {
     /** Has the board been given children? */
     public boolean isExpanded;
 
+    public short move;
+
 
 
     /**
@@ -53,6 +55,7 @@ public class MCTNode {
         this.lastMove = parentNode;
         this.nextMoves = new ConcurrentLinkedQueue<>();
         this.isExpanded = false;
+        this.move = 0;
     } //MCNode(Board, MCNode)
 
     /**

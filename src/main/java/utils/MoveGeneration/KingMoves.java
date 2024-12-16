@@ -12,6 +12,8 @@ public class KingMoves {
      */
     public static long[] kingAttacks = generateAttackMapsKing();
 
+    public static final int CASTLE_FLAG = 2;
+
     /**
      * Generate attack maps for kings for all 64 squares.
      * 

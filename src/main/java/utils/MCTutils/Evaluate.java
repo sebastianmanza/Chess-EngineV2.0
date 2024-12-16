@@ -23,7 +23,7 @@ public class Evaluate {
             score = 0 - score;
         } // if
           // Convert the score to a probability using the sigmoid function
-        return sigmoid(score / 10);
+        return sigmoid(score / 5);
     }
 
     public static double sigmoid(double x) {

@@ -4,7 +4,6 @@ public class MoveGen {
     public static short[][] moves = generatePossibleMoves();
     public static long[][] moveParts = generateMoveParts();
 
-
     private static short[][] generatePossibleMoves() {
         short[][] mov = new short[64][64];
         for (int start = 0; start < 64; start++) {
@@ -40,14 +39,12 @@ public class MoveGen {
             moveParts[move][1] = BitBoardUtils.setBit(move & 0b111111);
             moveParts[move][2] = (move >> 12) & 0b11;
             moveParts[move][3] = (move >> 14) & 0b11;
-        } //for
+        } // for
         return moveParts;
-    } //generateMoveParts
-
+    } // generateMoveParts
 
     public static GameState applyMove(short move, GameState prevState) throws Exception {
         GameState state = new GameState(prevState);
-
         long origMask = moveParts[move][0];
         long destMask = moveParts[move][1];
 
@@ -100,11 +97,48 @@ public class MoveGen {
                 }
             }
         } // if its a promotion
+        else {
+            if (moveParts[move][2] == KingMoves.CASTLE_FLAG) {
+                /* Kingside castle (W) */
+                if (moveParts[move][1] == BitBoardUtils.setBit(6)) {
+                    long clearMask = ~BitBoardUtils.setBit(7);
+                    state.bitBoards[GameState.WROOKS] &= clearMask;
+                    state.bitBoards[GameState.WPIECES] &= clearMask;
+                    long addMask = BitBoardUtils.setBit(5);
+                    state.bitBoards[GameState.WROOKS] |= addMask;
+                    state.bitBoards[GameState.WPIECES] |= addMask;
+                } else if (moveParts[move][1] == BitBoardUtils.setBit(62)) {
+                    long clearMask = ~BitBoardUtils.setBit(63);
+                    state.bitBoards[GameState.BROOKS] &= clearMask;
+                    state.bitBoards[GameState.BPIECES] &= clearMask;
+                    long addMask = BitBoardUtils.setBit(61);
+                    state.bitBoards[GameState.BROOKS] |= addMask;
+                    state.bitBoards[GameState.BPIECES] |= addMask;
+                } else if (moveParts[move][1] == BitBoardUtils.setBit(2)) {
+                    long clearMask = ~BitBoardUtils.setBit(0);
+                    state.bitBoards[GameState.WROOKS] &= clearMask;
+                    state.bitBoards[GameState.WPIECES] &= clearMask;
+                    long addMask = BitBoardUtils.setBit(3);
+                    state.bitBoards[GameState.WROOKS] |= addMask;
+                    state.bitBoards[GameState.WPIECES] |= addMask;
+                } else if (moveParts[move][1] == BitBoardUtils.setBit(58)) {
+                    long clearMask = ~BitBoardUtils.setBit(56);
+                    state.bitBoards[GameState.BROOKS] &= clearMask;
+                    state.bitBoards[GameState.BPIECES] &= clearMask;
+                    long addMask = BitBoardUtils.setBit(59);
+                    state.bitBoards[GameState.BROOKS] |= addMask;
+                    state.bitBoards[GameState.BPIECES] |= addMask;
+                }
+
+                state.bitBoards[GameState.ALLPIECES] = state.bitBoards[GameState.WPIECES]
+                        | state.bitBoards[GameState.BPIECES];
+            }
+        }
         if (!state.isLegal(state.turnColor)) {
             return null;
         } // if
         state.turnColor = state.oppColor();
         return state;
     }
-    
+
 }

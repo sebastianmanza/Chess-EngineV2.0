@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 import utils.MoveGeneration.GameState;
 import utils.MoveGeneration.MoveGen;
+import utils.UserInterface.UIUtils;
 
 /**
  * The class that runs the Monte Carlo Tree.
@@ -47,7 +48,7 @@ public class MCT {
      * @throws Exception if something goes wrong with the PrintWriter or
      *                   ExecutorService.
      */
-    public GameState search(Duration duration, boolean printScenarios) throws Exception {
+    public MCTNode search(Duration duration, boolean printScenarios) throws Exception {
         Instant start = Instant.now();
         Instant deadline = start.plus(duration);
         PrintWriter pen = new PrintWriter(System.out, true);
@@ -82,13 +83,11 @@ public class MCT {
 
         if (printScenarios) {
             printLikelyScenario(root);
+            printMoveChoices(root);
+            pen.println("Simulated " + root.playOuts.get() + " games. Simulated win rate: " + (bestNode.wins.get() / bestNode.playOuts.get() * 100));
         } // if
-        /* Print information and return the move. */
-        pen.println("Simulated " + root.playOuts.get() + " games.");
-        pen.printf("Chosen move was played %d times with a simulated win rate of %.2f%%\n",
-                bestNode.playOuts.get(), bestNode.wins.get() / bestNode.playOuts.get() * 100);
-
-        return bestNode.state;
+        /* Return the move. */
+        return bestNode;
     } // search(Duration)
 
     /**
@@ -156,6 +155,7 @@ public class MCT {
                             } // if
                             MCTNode newNode = new MCTNode(gameState, node);
                             node.newChild(newNode);
+                            newNode.move = move;
                         } catch (Exception e) {
                         } // try/catch
                     } // for
@@ -222,17 +222,9 @@ public class MCT {
             if (FiftyMoveRule > 50) {
                 return 0.5; // Draw
             }
-            if (depth++ > 150) {
+            if (depth++ > 50) {
                 double eval = Evaluate.evaluate(gameState);
-                if (eval > WINNING_THRESHOLD) { // Large positive or negative value
-                    return 1.0;
-                } else if (eval < (1 - WINNING_THRESHOLD)) {
-                    return 0.0;
-                } else {
-                    return 0.5;
-                }
-
-            }
+                return eval;            }
         }
     }
 
@@ -282,5 +274,16 @@ public class MCT {
             node = Collections.max(node.nextMoves, Comparator.comparingInt(n -> n.playOuts.get()));
         } // while
     } // printLikelyScenario(PrintWriter, MCTNode)
+
+    private static void printMoveChoices(MCTNode root) {
+        int size = root.nextMoves.size();
+        for (int i = 0; i < size; i++) {
+            MCTNode worst = Collections.min(root.nextMoves, Comparator.comparingInt(n -> n.playOuts.get()));
+            System.out.printf(
+                    "Move: %s | Win rate: %.2f | Playouts: %d\n",
+                    UIUtils.toNotation(worst.move), ((worst.wins.get() / worst.playOuts.get()) * 100), worst.playOuts.get());
+            root.nextMoves.remove(worst);
+        } // for
+    }
 
 } // MCT

@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 /**
  * An updated version of board that stores the game state in bitboards.
  * 
- * PRECOMPUTE CREATEMOVE createMove[64]
  * 
  * @author Sebastian Manza
  */
@@ -178,7 +177,7 @@ public class GameState {
                     /* There are four different pieces our pawn could promote to. */
                     for (int promotions = 0; promotions < 4; promotions++) {
                         short move = MoveGen.moves[pawnSquare][endSquare];
-                                /* Promotion type at bits 13-14 */
+                        /* Promotion type at bits 13-14 */
                         move |= ((promotions & 0b11) << 12);
                         move |= ((PawnMoves.PROMOTION_FLAG & 0b11) << 14);
                         legalMoves[numMov++] = move;
@@ -239,7 +238,6 @@ public class GameState {
         /* Return a dynamically sized Array */
         return Arrays.copyOfRange(legalMoves, 0, numMov);
     } // nextMoves()
-
 
     public boolean oppEngineColor() {
         return !this.engineColor;
@@ -346,6 +344,57 @@ public class GameState {
             System.out.println();
         }
         System.out.println();
+    }
+
+    public void setBoardFEN(String FEN) {
+
+        String[] parts = FEN.split(" ");
+        if (parts.length != 6) {
+            throw new IllegalArgumentException("Invalid FEN string: " + FEN);
+        }
+
+        /* Parse the board */
+        this.setPieces(parts[0]);
+
+        /* Parse the turnColor */
+        this.turnColor = parts[1].equals("w");
+    }
+
+    public void setPieces(String piecePlacement) {
+        /* Clear all of the bitBoards */
+        Arrays.fill(bitBoards, 0L);
+
+        int square = 56;
+        for (char c : piecePlacement.toCharArray()) {
+            if (c == '/') {
+                square -= 16; // Move to the next rank
+            } else if (Character.isDigit(c)) {
+                square += (c - '0'); // Skip empty squares
+            } else {
+                long bit = 1L << square;
+
+                // Add to the appropriate bitboard
+                switch (c) {
+                    case 'P' -> bitBoards[WPAWNS] |= bit;
+                    case 'N' -> bitBoards[WKNIGHTS] |= bit;
+                    case 'B' -> bitBoards[WBISHOPS] |= bit;
+                    case 'R' -> bitBoards[WROOKS] |= bit;
+                    case 'Q' -> bitBoards[WQUEEN] |= bit;
+                    case 'K' -> bitBoards[WKING] |= bit;
+                    case 'p' -> bitBoards[BPAWNS] |= bit;
+                    case 'n' -> bitBoards[BKNIGHTS] |= bit;
+                    case 'b' -> bitBoards[BBISHOPS] |= bit;
+                    case 'r' -> bitBoards[BROOKS] |= bit;
+                    case 'q' -> bitBoards[BQUEEN] |= bit;
+                    case 'k' -> bitBoards[BKING] |= bit;
+                    default -> throw new IllegalArgumentException("Invalid piece: " + c);
+                }
+                square++;
+            }
+        }
+        bitBoards[WPIECES] = bitBoards[WPAWNS] | bitBoards[WBISHOPS] | bitBoards[WKNIGHTS] | bitBoards[WROOKS] | bitBoards[WKING] | bitBoards[WQUEEN];
+        bitBoards[BPIECES] = bitBoards[BPAWNS] | bitBoards[BBISHOPS] | bitBoards[BKNIGHTS] | bitBoards[BROOKS] | bitBoards[BKING] | bitBoards[BQUEEN];
+        bitBoards[ALLPIECES] = bitBoards[WPIECES] | bitBoards[BPIECES];
     }
 
 }

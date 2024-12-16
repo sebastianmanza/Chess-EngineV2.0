@@ -35,12 +35,12 @@ public class TARS {
 
         /* Create a new board. */
         GameState playingBoard = new GameState(true, engineColor);
-        playingBoard.setBoardStartingPos();
-
+        //String fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+        String fen = "2kr1b1r/pppbqppp/2n5/3pp1Pn/8/P2PKP2/1PP1P2P/RNBQ1BNR w - - 1 10";
+        playingBoard.setBoardFEN(fen);
+        //playingBoard.setBoardStartingPos();
         /* The starting and ending squares */
-        int start;
-        int end;
-
+        short move;
         /* Prompt and set duration. */
         pen.println("Enter starting duration:");
         input = eyes.nextLine();
@@ -56,43 +56,33 @@ public class TARS {
             playingBoard.printBoard();
 
             /* Prompt for squares */
-            pen.println("Starting square:");
+            pen.println("Move:");
             input = eyes.nextLine();
-            start = UIUtils.tosquareIndex(input);
-            pen.println("\nEnding Square:");
-            input = eyes.nextLine();
-            end = UIUtils.tosquareIndex(input);
+            move = UIUtils.uciToMove(input);
 
-            /* Create the move */
-            short nextMove = MoveGen.moves[start][end];
-            playingBoard = MoveGen.applyMove(nextMove, playingBoard);
+            playingBoard = MoveGen.applyMove(move, playingBoard);
         }
         while (!input.equals("QUIT")) {
             pen.println("----------------");
 
             /* Create the MCT */
             MCT mct = new MCT(playingBoard);
-            playingBoard = mct.search(duration, true);
-
+            playingBoard = mct.search(duration, true).state;
             if (playingBoard == null) {
                 pen.println("Game Over.");
                 break;
             }
 
             playingBoard.printBoard();
-            pen.println("Starting square:");
+            pen.println("Move:");
             input = eyes.nextLine();
-            start = UIUtils.tosquareIndex(input);
-            pen.println("\nEnding Square:");
-            input = eyes.nextLine();
-            end = UIUtils.tosquareIndex(input);
+            move = UIUtils.uciToMove(input);
 
             pen.println("Duration to run:");
             input = eyes.nextLine();
             duration = Duration.ofSeconds(Integer.parseInt(input));
             pen.print("\n----------------\n");
-            short nextMove = MoveGen.moves[start][end];
-            playingBoard = MoveGen.applyMove(nextMove, playingBoard);
+            playingBoard = MoveGen.applyMove(move, playingBoard);
 
             playingBoard.printBoard();
         }
