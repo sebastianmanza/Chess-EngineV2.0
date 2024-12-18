@@ -76,9 +76,9 @@ public class Engine {
         try {
             Duration time;
             if (gameTree.root.state.turnColor) {
-                time = Duration.ofMillis((int) (wtime * 0.03) + winc);
+                time = Duration.ofMillis((int) ((wtime - winc) * 0.03) + winc);
             } else {
-                time = Duration.ofMillis((int) (btime * 0.03) + binc);
+                time = Duration.ofMillis((int) ((btime - binc) * 0.03) + binc);
             } // if
             if (movetime != 1) {
                 time = Duration.ofMillis(movetime);

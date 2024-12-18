@@ -36,13 +36,6 @@ public class TrainingGen {
         return tensor;
     }
 
-    public static void main(String[] args) {
-        GameState gameState = new GameState(true, true);
-        gameState.setBoardStartingPos();
-        INDArray tensor = createTensor(gameState);
-        System.out.println(tensor);
-    }
-
 
 
 

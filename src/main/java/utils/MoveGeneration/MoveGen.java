@@ -161,7 +161,7 @@ public class MoveGen {
     /* Handle En Passant */
     if (state.enPassant != -1) {
         if (pieceType == GameState.WPAWNS || pieceType == GameState.BPAWNS) {
-            int originSquare = Long.numberOfTrailingZeros(origMask);
+        int originSquare = Long.numberOfTrailingZeros(origMask);
         int destSquare = Long.numberOfTrailingZeros(destMask);
 
         if (destSquare == state.enPassant) {

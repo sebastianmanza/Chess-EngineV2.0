@@ -3,42 +3,45 @@ package utils.MCTutils;
 import java.io.PrintWriter;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.SplittableRandom;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.List;
 
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 
+import utils.CNNutils.TrainingGen;
 import utils.MoveGeneration.GameState;
 import utils.MoveGeneration.MoveGen;
 import utils.UserInterface.UIUtils;
 
 /**
  * The class that runs the Monte Carlo Tree.
- * Only real applicable calls to this class lie with MCT.search().
+ * Only real applicable calls to this class lie with MCTCNN.search().
  * 
  * @author Sebastian Manza
  */
-public class MCT {
+public class MCTCNN {
 
     /** The exploration parameter, used to balance exploration vs exploitation */
     private static final double EXPLORATION_PARAM = 0.8;
 
     /** The root node of the move. (i.e. the move we are exploring from) */
-    MCTNode root;
+    private final MCTNode root;
+
+    MultiLayerNetwork tars;
 
     /**
      * Creates a new Monte Carlo Tree
      * 
      * @param state The most recent GameState
      */
-    public MCT(GameState state) {
+    public MCTCNN(GameState state, MultiLayerNetwork tars) {
         this.root = new MCTNode(state, null);
-    } // MCT(Board)
+        this.tars = tars;
+    } // MCTCNN(Board)
 
     /**
      * Searches for the best possible move in the tree.
@@ -54,26 +57,28 @@ public class MCT {
         Instant deadline = start.plus(duration);
         PrintWriter pen = new PrintWriter(System.out, true);
 
-        int processors = Runtime.getRuntime().availableProcessors();
-
-        ExecutorService executor = Executors.newFixedThreadPool(processors);
-
-        Runnable MCTSworker = () -> {
-            while (Instant.now().isBefore(deadline)) {
-                try {
-                    MCTNode selectedNode = select(root);
-                    MCTNode expandedNode = expand(selectedNode);
-                    double winPoints = simulate(expandedNode);
-                    backPropagate(expandedNode, winPoints);
-                } catch (Exception e) {
-                } // try/catch
+        while (Instant.now().isBefore(deadline)) {
+            try {
+                MCTNode selectedNode = select(root);
+                ArrayList<MCTNode> expandedNodes = expand(selectedNode);
+                INDArray winPoints;
+                if (expandedNodes == null) {
+                    ArrayList<MCTNode> endNode = new ArrayList<>();
+                    endNode.add(selectedNode);
+                    double wins = selectedNode.state.vicPoints();
+                    if (!selectedNode.state.engineColor) {
+                        wins = 1 - wins;
+                    }
+                    winPoints = Nd4j.scalar(wins);
+                    backPropagate(endNode, winPoints);
+                } else {
+                    winPoints = simulateWithTars(expandedNodes, tars);
+                    backPropagate(expandedNodes, winPoints);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            } // try/catch
             } // while
-        };
-        for (int i = 0; i < processors; i++) {
-            executor.submit(MCTSworker);
-        } // for
-        executor.shutdown();
-        executor.awaitTermination(duration.toMillis(), TimeUnit.MILLISECONDS);
 
         /* Find the best move based on the node that was played the most */
         if (root.nextMoves.isEmpty()) {
@@ -125,17 +130,17 @@ public class MCT {
                 return node;
             }
             /* Return the node with the highest UCB */
-            node = Collections.max(node.nextMoves, Comparator.comparingDouble(MCT::UCT));
+            node = Collections.max(node.nextMoves, Comparator.comparingDouble(MCTCNN::UCT));
         }
-    } // select(MCTNode)
+    } // select(MCTCNNNode)
 
     /**
      * Expands the tree one level deeper to continue searching
      * 
      * @param node The first node reached with no children.
-     * @return The expanded node.
+     * @return The list of expanded nodes.
      */
-    private static MCTNode expand(MCTNode node) {
+    private static ArrayList<MCTNode> expand(MCTNode node) {
         /*
          * Synchronize the expansion process so multiple threads don't attempt to expand
          * the same node
@@ -163,71 +168,54 @@ public class MCT {
                 }
             }
         }
-        /* Return the node if theres no possible next move */
+        /*
+         * Return the node if theres no possible next move. We need to evaluate the
+         * gamestate
+         */
         if (node.nextMoves.isEmpty()) {
-            return node;
+            return null;
         } // if
 
-        return node.nextMoves.peek();
+        return new ArrayList<>(node.nextMoves);
     } // expand(node)
 
     /**
-     * Randomly simulates the finish of the game from the current game state.
+     * Evaluate nodes
      * 
-     * @param node The terminating node
-     * @param root The original root of the tree
-     * @return the number of win-points
+     * @param moves the list of nodes to evaluate
+     * @param tars
+     * @return
+     * @throws Exception
      */
+    private static INDArray simulateWithTars(ArrayList<MCTNode> nextMoves, MultiLayerNetwork tars) {
+        int numMoves = nextMoves.size();
+        if (numMoves == 0) {
+            return null;
+            // needs to be evaluated based on terminal state.
+        }
+        INDArray output = null;
+        // System.out.println("Evaluating " + numMoves + " children in batches...");
 
-    private static double simulate(MCTNode node) throws Exception {
-        /* Set the current board and the maximum depth to simulate to */
-        GameState gameState = node.state;
-        int depth = 0;
-        SplittableRandom random = new SplittableRandom();
-        int pieceCount = gameState.numPieces();
-        long PawnPos = gameState.bitBoards[GameState.WPAWNS] & gameState.bitBoards[GameState.BPAWNS];
-        int FiftyMoveRule = 0;
-        /* Run the loop while the game is undecided */
-        while (true) {
-            short[] nextMoves = gameState.nextMoves();
-            int numMov = nextMoves.length;
-            int lastPieceCount = pieceCount;
-            long lastPawnPos = PawnPos;
-            pieceCount = gameState.numPieces();
-            PawnPos = gameState.bitBoards[GameState.WPAWNS] & gameState.bitBoards[GameState.BPAWNS];
+        for (int i = 0; i < numMoves; i += 32) {
+            int end = Math.min(i + 32, numMoves);
+            List<MCTNode> batch = nextMoves.subList(i, end);
+            // Prepare input tensor for batch
+            INDArray batchInput = Nd4j.create(new int[] { batch.size(), 13, 8, 8 });
+            for (int j = 0; j < batch.size(); j++) {
+                INDArray tensor = TrainingGen.createTensor(batch.get(j).state);
+                tensor = tensor.reshape(13, 8, 8);
+                batchInput.putSlice(j, tensor);
+            }
 
-            if (pieceCount == lastPieceCount && PawnPos == lastPawnPos) {
-                FiftyMoveRule++;
+            // Run inference for batch
+            INDArray batchOutput = tars.output(batchInput);
+            if (output == null) {
+                output = batchOutput;
             } else {
-                FiftyMoveRule = 0;
-            }
-
-            while (true) {
-                // Ensure nextMoves has elements to select
-                if (numMov == 0) {
-                    return gameState.vicPoints(); // No valid moves, return victory points
-                }
-
-                int rand = random.nextInt(numMov);
-                short move = nextMoves[rand];
-                GameState nextState = MoveGen.applyMove(move, gameState);
-
-                // Check if the move leads to a valid state
-                if (nextState != null) {
-                    gameState = nextState;
-                    break;
-                } else {
-                    nextMoves[rand] = nextMoves[--numMov];
-                }
-            }
-            if (FiftyMoveRule > 50) {
-                return 0.5; // Draw
-            }
-            if (depth++ > 50) {
-                double eval = Evaluate.evaluate(gameState);
-                return eval;
+                output = Nd4j.concat(0, output, batchOutput);
             }
         }
+        return output;
     }
 
     /**
@@ -237,27 +225,34 @@ public class MCT {
      * 
      * @param node      The node to backpropagate from (terminating node)
      * @param winPoints The number of points to be given.
-     * @param length    The length of the simulation
+     * @param length
+     * 
      */
-    private static void backPropagate(MCTNode node, double winPoints) {
-        MCTNode curNode = node;
+    private static void backPropagate(ArrayList<MCTNode> nodes, INDArray winPoints) {
+        for (int i = 0; i < nodes.size(); i++) {
+            MCTNode curNode = nodes.get(i);
 
-        /* Synchronize the calculations */
-        while (curNode != null) {
-            synchronized (curNode) {
+            /* Synchronize the calculations */
+            while (curNode != null) {
+                synchronized (curNode) {
 
-                /* Add the rewards. */
-                curNode.playOuts.incrementAndGet();
-                if (curNode.state.turnColor != curNode.state.engineColor) {
-                    curNode.wins.addAndGet(winPoints);
-                } else {
-                    curNode.wins.addAndGet(1 - winPoints);
-                } // if/else
+                    /* Add the rewards. */
+                    curNode.playOuts.incrementAndGet();
+                    double wins = winPoints.getDouble(i);
+                    if (nodes.get(i).state.turnColor) {
+                        wins = 1 - wins;
+                    }
+                    if (curNode.state.turnColor != curNode.state.engineColor) {
+                        curNode.wins.addAndGet(wins);
+                    } else {
+                        curNode.wins.addAndGet(1 - wins);
+                    } // if/else
 
-            } // synchronized(node)
-            curNode = curNode.lastMove;
-        } // while
-    } // backPropogate(MCTNode, double, MCTNode)
+                } // synchronized(node)
+                curNode = curNode.lastMove;
+            } // while
+        }
+    } // backPropogate(MCTCNNNode, double, MCTCNNNode)
 
     /**
      * Prints the computers most likely scenario.
@@ -275,7 +270,7 @@ public class MCT {
                     node.playOuts.get(), (node.wins.get() / node.playOuts.get()) * 100);
             node = Collections.max(node.nextMoves, Comparator.comparingInt(n -> n.playOuts.get()));
         } // while
-    } // printLikelyScenario(PrintWriter, MCTNode)
+    } // printLikelyScenario(PrintWriter, MCTCNNNode)
 
     /**
      * Print the move choices ranked from worst to best stemming from the root.
@@ -301,4 +296,22 @@ public class MCT {
         }
         return policy;
     }
-} // MCT
+
+    public static MoveProb[] getMoveProbabilities(GameState state, INDArray rawPolicy) {
+
+        /* Get the legal moves */
+        short[] legalMoves = state.nextMoves();
+        MoveProb[] moves = new MoveProb[legalMoves.length];
+
+        for (int i = 0; i < legalMoves.length; i++) {
+            short move = legalMoves[i];
+            int fromIndex = Long.numberOfTrailingZeros(MoveGen.moveParts[move][0]);
+            int toIndex = Long.numberOfTrailingZeros(MoveGen.moveParts[move][1]);
+            int policyIndex = fromIndex * 64 + toIndex;
+
+            moves[i] = new MoveProb(move, rawPolicy.getDouble(policyIndex));
+        }
+        return moves;
+    }
+
+} // MCTCNN

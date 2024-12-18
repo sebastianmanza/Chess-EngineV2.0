@@ -121,7 +121,7 @@ public class GameState {
         long[] pawnCaptures = (this.turnColor) ? PawnMoves.pawnCapturesW : PawnMoves.pawnCapturesB;
         long[] pawnStarts = (this.turnColor) ? PawnMoves.pawnStartsW : PawnMoves.pawnStartsB;
         boolean[] startingRow = (this.turnColor) ? PawnMoves.WHITE_START_ROW : PawnMoves.BLACK_START_ROW;
-        boolean[] promotionRow = (this.turnColor) ? PawnMoves.WHITE_PROMOTION_ROW : PawnMoves.BLACK_START_ROW;
+        boolean[] promotionRow = (this.turnColor) ? PawnMoves.WHITE_PROMOTION_ROW : PawnMoves.BLACK_PROMOTION_ROW;
         /* Check if there is anything on the knight board. */
         while (knights != 0) {
             int knightSquare = Long.numberOfTrailingZeros(knights);

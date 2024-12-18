@@ -1,6 +1,7 @@
 package utils.MCTutils;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.util.concurrent.AtomicDouble;
@@ -41,6 +42,18 @@ public class MCTNode {
 
     /** The most recent move played */
     public short move;
+
+    public final AtomicBoolean inQueue = new AtomicBoolean(false);
+
+    public boolean tryMarkInQueue() {
+        // Atomically mark as in queue if it was not already marked
+        return inQueue.compareAndSet(false, true);
+    }
+
+    public void unmarkInQueue() {
+        // Reset the state to allow re-queuing
+        inQueue.set(false);
+    }
 
 
     /**
