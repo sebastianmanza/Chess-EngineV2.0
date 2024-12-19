@@ -13,10 +13,10 @@ import utils.MoveGeneration.GameState;
 public class TARSmodel {
 
     private final MultiLayerNetwork TARS;
-    private final int selfPlayGamesPerIteration = 25;
+    private final int selfPlayGamesPerIteration = 128;
     private final int trainingEpochs = 10;
-    private final int evaluationGames = 10;
-    private final int batchsize = 1;
+    private final int evaluationGames = 20;
+    private final int batchsize = 32;
     private final double evaluationThreshold = 0.55; // Minimum win rate to replace the current model
 
     public TARSmodel() {
@@ -31,7 +31,7 @@ public class TARSmodel {
      * Main loop for self-play, training, and evaluation.
      */
     public void train() throws Exception {
-        int iteration = 1;
+        int iteration = 2;
         while (true) {
             System.out.printf("=== Iteration %d ===\n", iteration);
 
@@ -55,9 +55,7 @@ public class TARSmodel {
             } else {
                 System.out.printf("Iteration %d: New model failed evaluation. Retrying...\n", iteration);
             }
-            break;
-
-            //iteration++;
+            iteration++;
         }
     }
 
@@ -99,7 +97,7 @@ public class TARSmodel {
             long PawnPos = state.bitBoards[GameState.WPAWNS] & state.bitBoards[GameState.BPAWNS];
             int FiftyMoveRule = 0;
             double result;
-            MultiLayerNetwork tarsTwo = TARSCNN.BuildCNN();
+            MultiLayerNetwork tarsTwo = TARSCNN.loadModel(prevIter);
 
             /* Play a match between the models */
             while (true) {
@@ -153,7 +151,7 @@ public class TARSmodel {
     }
 
     public static void main(String[] args) throws Exception {
-        TARSmodel tars = new TARSmodel();
+        TARSmodel tars = new TARSmodel(new File("TARSModel-1.1.zip"));
         tars.train();
     }
 }

@@ -9,7 +9,7 @@ import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 
-import utils.MCTutils.MCT;
+import utils.MCTutils.MCTCNN;
 import utils.MCTutils.MCTNode;
 import utils.MoveGeneration.GameState;
 
@@ -38,11 +38,11 @@ public class TARSTrainer {
                 /* Create the training data */
                 INDArray inputPos = TrainingGen.createTensor(state);
                 state.engineColor = state.oppEngineColor(); //switch engine color so it still plays best move
-                MCT mct = new MCT(state);
+                MCTCNN mct = new MCTCNN(state, tars);
                 //System.out.println(MCTpolicy);
                 games.add(new TrainingGame(inputPos, vicPoints));
 
-                MCTNode node = mct.search(Duration.ofMillis(100), false);
+                MCTNode node = mct.search(Duration.ofMillis(2000), false);
                 
                 if (node == null) {
                     state.engineColor = true;
