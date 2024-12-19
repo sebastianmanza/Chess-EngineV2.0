@@ -66,9 +66,6 @@ public class MCTCNN {
                     ArrayList<MCTNode> endNode = new ArrayList<>();
                     endNode.add(selectedNode);
                     double wins = selectedNode.state.vicPoints();
-                    if (!selectedNode.state.engineColor) {
-                        wins = 1 - wins;
-                    }
                     winPoints = Nd4j.scalar(wins);
                     backPropagate(endNode, winPoints);
                 } else {
@@ -239,8 +236,8 @@ public class MCTCNN {
                     /* Add the rewards. */
                     curNode.playOuts.incrementAndGet();
                     double wins = winPoints.getDouble(i);
-                    if (nodes.get(i).state.turnColor) {
-                        wins = 1 - wins;
+                    if ((nodes.size() != 1) && !nodes.get(i).state.engineColor) {
+                        wins = (1 - wins);
                     }
                     if (curNode.state.turnColor != curNode.state.engineColor) {
                         curNode.wins.addAndGet(wins);
