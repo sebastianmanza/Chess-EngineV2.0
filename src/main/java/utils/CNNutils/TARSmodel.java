@@ -13,9 +13,9 @@ import utils.MoveGeneration.GameState;
 public class TARSmodel {
 
     private final MultiLayerNetwork TARS;
-    private final int selfPlayGamesPerIteration = 128;
+    private final int selfPlayGamesPerIteration = 256;
     private final int trainingEpochs = 10;
-    private final int evaluationGames = 20;
+    private final int evaluationGames = 10;
     private final int batchsize = 32;
     private final double evaluationThreshold = 0.55; // Minimum win rate to replace the current model
 
@@ -138,6 +138,9 @@ public class TARSmodel {
             }
             state.engineColor = true;
             result = state.vicPoints();
+            if (FiftyMoveRule >= 25) {
+                result = 0.5;
+            }
             if (result == 1.0)
                 wins++;
             else if (result == 0.5)
@@ -145,7 +148,7 @@ public class TARSmodel {
             System.out.println(result);
         }
 
-        double winRate = (double) wins / evaluationGames;
+        double winRate = ((double) wins + (draws / 2)) / evaluationGames;
         System.out.printf("Evaluation Results: Wins = %d, Draws = %d, Win Rate = %.2f%%\n", wins, draws, winRate * 100);
         return winRate >= evaluationThreshold;
     }

@@ -9,7 +9,7 @@ import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 
-import utils.MCTutils.MCTCNN;
+import utils.MCTutils.MCT;
 import utils.MCTutils.MCTNode;
 import utils.MoveGeneration.GameState;
 
@@ -38,11 +38,11 @@ public class TARSTrainer {
                 /* Create the training data */
                 INDArray inputPos = TrainingGen.createTensor(state);
                 state.engineColor = state.oppEngineColor(); //switch engine color so it still plays best move
-                MCTCNN mct = new MCTCNN(state, tars);
-                //System.out.println(MCTpolicy);
+                // MCTCNN mct = new MCTCNN(state, tars);
+                MCT mct = new MCT(state);
                 games.add(new TrainingGame(inputPos, vicPoints));
 
-                MCTNode node = mct.search(Duration.ofMillis(2000), false);
+                MCTNode node = mct.search(Duration.ofMillis(200), false);
                 
                 if (node == null) {
                     state.engineColor = true;
@@ -50,14 +50,14 @@ public class TARSTrainer {
                     break;
                 } else {
                     state = node.state;
-                    state.printBoard();
+                    //state.printBoard();
                 }
                 if (pieceCount == lastPieceCount && PawnPos == lastPawnPos) {
                     FiftyMoveRule++;
                 } else {
                     FiftyMoveRule = 0;
                 }
-                if (FiftyMoveRule >= 100) {
+                if (FiftyMoveRule >= 50) {
                     vicPoints = Nd4j.scalar(0.5);
                     break;
                 }
@@ -65,9 +65,7 @@ public class TARSTrainer {
             for (TrainingGame game : games) {
                 game.winPercent = vicPoints;
             }
-            for (TrainingGame game : games) {
-                System.out.print(game.winPercent);
-            }
+            System.out.printf("\r Games Simulated: %d", i);
             allGames.addAll(games);
         }
         return allGames;
