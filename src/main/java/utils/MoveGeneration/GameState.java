@@ -188,7 +188,8 @@ public class GameState {
              * Join the 'quiet' moves with the captures. To capture, there must be a piece
              * from the opponent in that slot.
              */
-            long oppBoardEnPassant = (this.enPassant == -1) ? oppBoard : oppBoard | BitBoardUtils.setBit(this.enPassant);
+            long oppBoardEnPassant = (this.enPassant == -1) ? oppBoard
+                    : oppBoard | BitBoardUtils.setBit(this.enPassant);
             attackBoard |= (pawnCaptures[pawnSquare] & oppBoardEnPassant);
             while (attackBoard != 0) {
                 int endSquare = Long.numberOfTrailingZeros(attackBoard);
@@ -207,7 +208,7 @@ public class GameState {
                     legalMoves[numMov++] = MoveGen.moves[pawnSquare][endSquare];
                     if (Math.abs(pawnSquare - endSquare) == 16) {
                         legalMoves[numMov] |= ((PawnMoves.EN_PASSANT_FLAG & 0b11) << 12);
-                    } //if
+                    } // if
                 }
                 /* Remove the last significant bit from the attack board. */
                 attackBoard &= (attackBoard - 1);
@@ -337,7 +338,7 @@ public class GameState {
         if ((attackBoard & oppPawn) != 0) {
             return false;
         } // if
-// if
+        // if
         /*
          * Can't forget to move the other king or the whole thing doesn't work and
          * throws
@@ -396,6 +397,93 @@ public class GameState {
         } // for
         System.out.println();
     } // printBoard()
+
+    public String setFENBoard() {
+        StringBuilder str = new StringBuilder();
+        str.append(getFENPieces());
+        str.append(" ");
+        str.append(turnColorStr());
+        str.append(" ");
+        str.append(getCastlingRights());
+        str.append(" ");
+        str.append("- 0 1");
+
+        return str.toString();
+    } //
+
+    private String getFENPieces() {
+        StringBuilder str = new StringBuilder();
+        for (int row = 7; row >= 0; row--) { // FEN starts from row 8 (index 7)
+            int emptyCount = 0; // Track empty squares in the row
+            for (int col = 0; col < 8; col++) {
+                int square = row * 8 + col;
+                char piece = getPieceAt(square);
+    
+                if (piece == ' ') {
+                    emptyCount++;
+                } else {
+                    if (emptyCount > 0) {
+                        str.append(emptyCount); // Append empty square count
+                        emptyCount = 0;
+                    }
+                    str.append(piece); // Append piece symbol
+                }
+            }
+            if (emptyCount > 0) {
+                str.append(emptyCount); // Append remaining empty squares
+            }
+            if (row > 0) {
+                str.append("/"); // Separate rows with "/"
+            }
+        }
+        return str.toString();
+    }
+    
+    private char getPieceAt(int square) {
+        if ((bitBoards[WPAWNS] & (1L << square)) != 0) return 'P';
+        if ((bitBoards[BPAWNS] & (1L << square)) != 0) return 'p';
+        if ((bitBoards[WKNIGHTS] & (1L << square)) != 0) return 'N';
+        if ((bitBoards[BKNIGHTS] & (1L << square)) != 0) return 'n';
+        if ((bitBoards[WBISHOPS] & (1L << square)) != 0) return 'B';
+        if ((bitBoards[BBISHOPS] & (1L << square)) != 0) return 'b';
+        if ((bitBoards[WROOKS] & (1L << square)) != 0) return 'R';
+        if ((bitBoards[BROOKS] & (1L << square)) != 0) return 'r';
+        if ((bitBoards[WQUEEN] & (1L << square)) != 0) return 'Q';
+        if ((bitBoards[BQUEEN] & (1L << square)) != 0) return 'q';
+        if ((bitBoards[WKING] & (1L << square)) != 0) return 'K';
+        if ((bitBoards[BKING] & (1L << square)) != 0) return 'k';
+        return ' '; // Empty square
+    }
+
+    private String turnColorStr() {
+        if (this.turnColor) {
+            return "w";
+        } else {
+            return "b";
+        }
+    }
+
+    private String getCastlingRights() {
+        StringBuilder str = new StringBuilder();
+        if (this.whiteKingSide) {
+            str.append("W");
+        }
+        if (this.whiteQueenSide) {
+            str.append("B");
+        }
+        if (this.blackKingSide) {
+            str.append("w");
+        }
+        if (this.blackQueenSide) {
+            str.append("b");
+        }
+
+        if (str.toString().equals("")) {
+            return "-";
+        } else {
+            return str.toString();
+        }
+    }
 
     /**
      * Set a board according to an FEN.
@@ -479,14 +567,14 @@ public class GameState {
     } // setPieces(String)
 
     /**
- * Set castling rights according to the FEN castling string.
- * 
- * @param castling the string representing castling rights
- */
-private void setCastlingRights(String castling) {
-    this.whiteKingSide = castling.contains("K");
-    this.whiteQueenSide = castling.contains("Q");
-    this.blackKingSide = castling.contains("k");
-    this.blackQueenSide = castling.contains("q");
-}
+     * Set castling rights according to the FEN castling string.
+     * 
+     * @param castling the string representing castling rights
+     */
+    private void setCastlingRights(String castling) {
+        this.whiteKingSide = castling.contains("K");
+        this.whiteQueenSide = castling.contains("Q");
+        this.blackKingSide = castling.contains("k");
+        this.blackQueenSide = castling.contains("q");
+    }
 } // GameState

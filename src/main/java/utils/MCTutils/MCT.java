@@ -15,6 +15,7 @@ import org.nd4j.linalg.factory.Nd4j;
 
 import utils.MoveGeneration.GameState;
 import utils.MoveGeneration.MoveGen;
+import utils.TablebaseUtils.JavaTablebaseBridge;
 import utils.UserInterface.UIUtils;
 
 /**
@@ -55,7 +56,7 @@ public class MCT {
         PrintWriter pen = new PrintWriter(System.out, true);
 
         int processors = Runtime.getRuntime().availableProcessors();
-
+        //int processors = 1;
         ExecutorService executor = Executors.newFixedThreadPool(processors);
 
         Runnable MCTSworker = () -> {
@@ -187,6 +188,7 @@ public class MCT {
         int pieceCount = gameState.numPieces();
         long PawnPos = gameState.bitBoards[GameState.WPAWNS] & gameState.bitBoards[GameState.BPAWNS];
         int FiftyMoveRule = 0;
+        JavaTablebaseBridge bridge = new JavaTablebaseBridge();
         /* Run the loop while the game is undecided */
         while (true) {
             short[] nextMoves = gameState.nextMoves();
@@ -207,6 +209,10 @@ public class MCT {
                 if (numMov == 0) {
                     return gameState.vicPoints(); // No valid moves, return victory points
                 }
+                if (pieceCount < 6) {
+                    double score = bridge.probeWDL(gameState);
+                    return score;
+                }
 
                 int rand = random.nextInt(numMov);
                 short move = nextMoves[rand];
@@ -223,8 +229,11 @@ public class MCT {
             if (FiftyMoveRule > 50) {
                 return 0.5; // Draw
             }
-            if (depth++ > 50) {
+            if (depth++ > 0) {
                 double eval = Evaluate.evaluate(gameState);
+                if (!gameState.engineColor) {
+                    eval = 1 - eval;
+                }
                 return eval;
             }
         }

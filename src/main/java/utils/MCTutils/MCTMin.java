@@ -22,28 +22,31 @@ import utils.UserInterface.UIUtils;
 
 /**
  * The class that runs the Monte Carlo Tree.
- * Only real applicable calls to this class lie with MCTCNN.search(). This MCT
- * uses a CNN as the heuristic, but backpropagates as normal
+ * Only real applicable calls to this class lie with MCTCNN.search().
+ * This MCT uses a CNN as a heuristic, and backpropagates in a special way
+ * that I think I invented but may have been done before. See readme for
+ * (slightly) more detail,
+ * or try to make out what I'm tryihng to do in my poorly commented code
  * 
  * @author Sebastian Manza
  */
-public class MCTCNN {
+public class MCTMin {
 
     /** The exploration parameter, used to balance exploration vs exploitation */
-    private static double EXPLORATION_PARAM = 0.8;
+    private static double EXPLORATION_PARAM = 0.5;
 
     /** The root node of the move. (i.e. the move we are exploring from) */
-    final MCTNode root;
+    final CNNode root;
 
-    public static final MultiLayerNetwork tars = TARSCNN.loadModel(new File("TARS-V5.6.zip"));
+    public static final MultiLayerNetwork tars = TARSCNN.loadModel(new File("TARS-V5.8.zip"));
 
     /**
      * Creates a new Monte Carlo Tree
      * 
      * @param state The most recent GameState
      */
-    public MCTCNN(GameState state) {
-        this.root = new MCTNode(state, null);
+    public MCTMin(GameState state) {
+        this.root = new CNNode(state, null);
     } // MCTCNN(Board)
 
     /**
@@ -55,7 +58,7 @@ public class MCTCNN {
      * @throws Exception if something goes wrong with the PrintWriter or
      *                   ExecutorService.
      */
-    public MCTNode search(Duration duration, boolean printScenarios) throws Exception {
+    public CNNode search(Duration duration, boolean printScenarios) throws Exception {
         Instant start = Instant.now();
         Instant deadline = start.plus(duration);
         PrintWriter pen = new PrintWriter(System.out, true);
@@ -65,20 +68,20 @@ public class MCTCNN {
         // Runnable MCTCNNworker = () -> {
         while (Instant.now().isBefore(deadline)) {
             try {
-                MCTNode selectedNode = select(root);
+                CNNode selectedNode = select(root);
                 INDArray winPoints;
                 if (selectedNode.state.numPieces() < 6) {
-                    ArrayList<MCTNode> endNode = new ArrayList<>();
+                    ArrayList<CNNode> endNode = new ArrayList<>();
                     endNode.add(selectedNode);
                     JavaTablebaseBridge bridge = new JavaTablebaseBridge();
                     winPoints = Nd4j.scalar(bridge.probeWDL(selectedNode.state));
                     backPropagate(endNode, winPoints);
                     continue;
                 }
-                ArrayList<MCTNode> expandedNodes = expand(selectedNode);
+                ArrayList<CNNode> expandedNodes = expand(selectedNode);
 
                 if (expandedNodes == null) {
-                    ArrayList<MCTNode> endNode = new ArrayList<>();
+                    ArrayList<CNNode> endNode = new ArrayList<>();
                     endNode.add(selectedNode);
                     double wins = selectedNode.state.vicPoints();
                     winPoints = Nd4j.scalar(wins);
@@ -87,17 +90,14 @@ public class MCTCNN {
                     winPoints = simulateWithTars(expandedNodes, tars);
                     backPropagate(expandedNodes, winPoints);
                 }
-                if (root.playOuts.get() % 10000 == 0) {
-                    EXPLORATION_PARAM -= 0.1;
-                }
             } catch (Exception e) {
                 e.printStackTrace();
             } // try/catch
         } // while
-        // };
-        // for (int i = 0; i < processors; i++) {
-        // executor.submit(MCTCNNworker);
-        // }
+          // };
+          // for (int i = 0; i < processors; i++) {
+          // executor.submit(MCTCNNworker);
+          // }
 
         // executor.shutdown();
         // executor.awaitTermination(duration.toMillis(), TimeUnit.MILLISECONDS);
@@ -105,12 +105,12 @@ public class MCTCNN {
         if (root.nextMoves.isEmpty()) {
             return null;
         } // if
-        MCTNode bestNode = Collections.max(root.nextMoves, Comparator.comparingInt(n -> n.playOuts.get()));
+        CNNode bestNode = Collections.max(root.nextMoves, Comparator.comparingInt(n -> n.timesAnalyzed.get()));
 
         if (printScenarios) {
             printMoveChoices(root);
-            pen.printf("Simulated %d games. Simulated win rate: %.2f\n", root.playOuts.get(),
-                    (bestNode.wins.get() / bestNode.playOuts.get() * 100));
+            pen.printf("Simulated %d games. Simulated win rate: %.2f\n", root.timesAnalyzed.get(),
+                    bestNode.winProb.get());
         } // if
         /* Return the move. */
         return bestNode;
@@ -122,20 +122,20 @@ public class MCTCNN {
      * @param node The node to calculate
      * @return The value of the node
      */
-    private static double UCT(MCTNode node) {
+    private static double UCT(CNNode node) {
 
         /* Make sure the last moves playouts isn't null */
-        double lastMovePlayouts = node.lastMove != null ? node.lastMove.playOuts.get() : 1;
+        double lastMovePlayouts = node.lastMove != null ? node.lastMove.timesAnalyzed.get() : 1;
 
         /* Return a high value if the node has never been played */
-        if (node.playOuts.get() == 0) {
-            return 1000.0 - (node.virtLoss.get() * 1000);
+        if (node.timesAnalyzed.get() == 0) {
+            return 1000.0;
         } // if
 
         /* Calculate the Upper Confidence Bound */
-        double UCB1 = (node.wins.get() / node.playOuts.get())
-                + (EXPLORATION_PARAM * Math.sqrt((Math.log(lastMovePlayouts)) / node.playOuts.get()));
-        return UCB1 - (node.virtLoss.get() * UCB1);
+        double UCB1 = (node.winProb.get())
+                + (EXPLORATION_PARAM * Math.sqrt((Math.log(lastMovePlayouts)) / node.timesAnalyzed.get()));
+        return UCB1;
     } // UCT(node)
 
     /**
@@ -144,14 +144,13 @@ public class MCTCNN {
      * @param node The beginning node.
      * @return The best possible node from the beginning node.
      */
-    private static MCTNode select(MCTNode node) {
+    private static CNNode select(CNNode node) {
         while (true) {
-            if (node.nextMoves.isEmpty() || node.playOuts.get() == 0 || node.state.numPieces() < 6) {
-                node.virtLoss.incrementAndGet();
+            if (node.nextMoves.isEmpty() || node.timesAnalyzed.get() == 0 || node.state.numPieces() < 6) {
                 return node;
             }
             /* Return the node with the highest UCB */
-            node = Collections.max(node.nextMoves, Comparator.comparingDouble(MCTCNN::UCT));
+            node = Collections.max(node.nextMoves, Comparator.comparingDouble(MCTMin::UCT));
         }
     } // select(MCTCNNNode)
 
@@ -161,7 +160,7 @@ public class MCTCNN {
      * @param node The first node reached with no children.
      * @return The list of expanded nodes.
      */
-    private static ArrayList<MCTNode> expand(MCTNode node) {
+    private static ArrayList<CNNode> expand(CNNode node) {
         /*
          * Synchronize the expansion process so multiple threads don't attempt to expand
          * the same node
@@ -180,10 +179,9 @@ public class MCTCNN {
                             if (gameState == null) {
                                 continue;
                             } // if
-                            MCTNode newNode = new MCTNode(gameState, node);
+                            CNNode newNode = new CNNode(gameState, node);
                             node.newChild(newNode);
                             newNode.move = move;
-                            newNode.virtLoss.incrementAndGet();
                         } catch (Exception e) {
                         } // try/catch
                     } // for
@@ -209,7 +207,7 @@ public class MCTCNN {
      * @return
      * @throws Exception
      */
-    private static INDArray simulateWithTars(ArrayList<MCTNode> nextMoves, MultiLayerNetwork tars) {
+    private static INDArray simulateWithTars(ArrayList<CNNode> nextMoves, MultiLayerNetwork tars) {
         int numMoves = nextMoves.size();
         if (numMoves == 0) {
             return null;
@@ -220,7 +218,7 @@ public class MCTCNN {
 
         for (int i = 0; i < numMoves; i += 32) {
             int end = Math.min(i + 32, numMoves);
-            List<MCTNode> batch = nextMoves.subList(i, end);
+            List<CNNode> batch = nextMoves.subList(i, end);
             // Prepare input tensor for batch
             INDArray batchInput = Nd4j.create(new int[] { batch.size(), 13, 8, 8 });
             for (int j = 0; j < batch.size(); j++) {
@@ -250,30 +248,54 @@ public class MCTCNN {
      * @param length
      * 
      */
-    private static void backPropagate(ArrayList<MCTNode> nodes, INDArray winPoints) {
+    private static void backPropagate(ArrayList<CNNode> nodes, INDArray winProb) {
+
         for (int i = 0; i < nodes.size(); i++) {
-            MCTNode curNode = nodes.get(i);
+            boolean continueBackPropagation = true;
+            CNNode node = nodes.get(i);
+            double winProbability = winProb.getDouble(i); // currently in terms of white
 
-            /* Synchronize the calculations */
-            while (curNode != null) {
-                synchronized (curNode) {
+            if ((nodes.size() != 1) && (!node.state.engineColor)) {
+                winProbability = (1 - winProbability);
+            } // now in terms of engine color
 
-                    /* Add the rewards. */
-                    curNode.playOuts.incrementAndGet();
-                    double wins = winPoints.getDouble(i);
-                    if ((nodes.size() != 1) && (!nodes.get(i).state.engineColor)) {
-                        wins = (1 - wins);
+            /* While it hasn't reached the root */
+            while (node != null) {
+                synchronized (node) {
+                    /* Update the win probability */
+                    if (continueBackPropagation) {
+                        if (node.state.engineColor != node.state.turnColor) {
+                            double avgWin = (node.winProb.get() == 0) ? winProbability
+                                    : ((winProbability + node.winProb.get()) / 2);
+                            node.winProb.set(avgWin);
+                        } else {
+                            double avgWin = (node.winProb.get() == 0) ? (1 - winProbability)
+                                    : (((1 - winProbability) + node.winProb.get()) / 2);
+                            node.winProb.set(avgWin);
+                        }
                     }
-                    if (curNode.state.turnColor != curNode.state.engineColor) {
-                        curNode.wins.addAndGet(wins);
+                    node.timesAnalyzed.incrementAndGet();
+                    /*
+                     * Stop the back propagation if the child hasn't been played the most, or has a
+                     * lower winrate if equal plays
+                     */
+                    if (node.lastMove == null) {
+                        break;
+                    }
+                    if (node.timesAnalyzed.get() < node.lastMove.childmaxPlayouts.get()) {
+                        continueBackPropagation = false;
+                    } else if (node.timesAnalyzed.get() == node.lastMove.childmaxPlayouts.get()) {
+                        if (node.winProb.get() < node.lastMove.greatestChild.get()) {
+                            continueBackPropagation = false;
+                        } else {
+                            node.lastMove.greatestChild.set(node.winProb.get());
+                        }
                     } else {
-                        curNode.wins.addAndGet(1 - wins);
-                    } // if/else
-
-                } // synchronized(node)
-                curNode.virtLoss.set(0);
-                curNode = curNode.lastMove;
-            } // while
+                        node.lastMove.childmaxPlayouts.set(node.timesAnalyzed.get());
+                    }
+                }
+                node = node.lastMove;
+            }
         }
     } // backPropogate(MCTCNNNode, double, MCTCNNNode)
 
@@ -284,28 +306,28 @@ public class MCTCNN {
      * @param root The root of the tree
      * @throws Exception if the printWriter object fails
      */
-    private static void printLikelyScenario(MCTNode root) throws Exception {
-        MCTNode node = root;
+    private static void printLikelyScenario(CNNode root) throws Exception {
+        CNNode node = root;
         while (node != null) {
             node.state.printBoard();
             System.out.printf(
                     "Board was played %d times with a winrate of %.2f%% \n",
-                    node.playOuts.get(), (node.wins.get() / node.playOuts.get()) * 100);
+                    node.timesAnalyzed.get(), (node.winProb.get() / node.timesAnalyzed.get()) * 100);
             if (node.nextMoves.isEmpty()) {
                 node = null;
             } else {
-                node = Collections.max(node.nextMoves, Comparator.comparingInt(n -> n.playOuts.get()));
+                node = Collections.max(node.nextMoves, Comparator.comparingDouble(n -> n.winProb.get()));
             }
         } // while
     } // printLikelyScenario(PrintWriter, MCTCNNNode)
 
-    private static String getMoveSequence(MCTNode node) throws Exception {
-        MCTNode curNode = node;
+    private static String getMoveSequence(CNNode node) throws Exception {
+        CNNode curNode = node;
         StringBuilder str = new StringBuilder();
         str.append("[");
         boolean addLetter = true;
         int numFullMoves = 1;
-        while (curNode != null) {
+        while (!curNode.nextMoves.isEmpty()) {
             if (addLetter) {
                 if (numFullMoves != 1) {
                     str.append(" ");
@@ -317,11 +339,7 @@ public class MCTCNN {
             addLetter = !addLetter;
             str.append(" ");
             str.append(UIUtils.moveToUCI(curNode.move));
-            if (curNode.nextMoves.isEmpty()) {
-                curNode = null;
-            } else {
-                curNode = Collections.max(curNode.nextMoves, Comparator.comparingDouble(n -> n.wins.get()));
-            }
+            curNode = Collections.max(curNode.nextMoves, Comparator.comparingInt(n -> n.timesAnalyzed.get()));
         }
         str.append("]");
         return str.toString();
@@ -330,14 +348,14 @@ public class MCTCNN {
     /**
      * Print the move choices ranked from worst to best stemming from the root.
      */
-    private static void printMoveChoices(MCTNode root) throws Exception {
+    private static void printMoveChoices(CNNode root) throws Exception {
         int size = root.nextMoves.size();
         for (int i = 0; i < size; i++) {
-            MCTNode worst = Collections.min(root.nextMoves, Comparator.comparingInt(n -> n.playOuts.get()));
+            CNNode worst = Collections.min(root.nextMoves, Comparator.comparingInt(n -> n.timesAnalyzed.get()));
             System.out.printf(
                     "Move: %s | Win rate: %.2f | Playouts: %d | %s\n",
-                    UIUtils.moveToUCI(worst.move), ((worst.wins.get() / worst.playOuts.get()) * 100),
-                    worst.playOuts.get(), getMoveSequence(worst));
+                    UIUtils.moveToUCI(worst.move), (worst.winProb.get() * 100),
+                    worst.timesAnalyzed.get(), getMoveSequence(worst));
             root.nextMoves.remove(worst);
         } // for
     } // printMoveChoices

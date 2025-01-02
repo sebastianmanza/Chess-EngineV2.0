@@ -15,13 +15,17 @@ import utils.UserInterface.UIUtils;
 public class Engine {
 
     /** The tree to do the work on (the real engine) */
-    private MCT gameTree;
+    private MCTMin gameTree;
+
+    private MCT gameTreeMCT;
 
     /**
      * Build an Engine instance, creating a new MCT.
      */
     public Engine() {
-        this.gameTree = new MCT(new GameState(true, true));
+        System.setProperty("OMP_NUM_THREADS", "1");
+        this.gameTree = new MCTMin(new GameState(true, true));
+        this.gameTreeMCT = new MCT(new GameState(true, true));
     } // Engine()
 
     /**
@@ -30,7 +34,8 @@ public class Engine {
     public void reset() {
         GameState initialState = new GameState(true, true);
         initialState.setBoardStartingPos();
-        gameTree = new MCT(initialState);
+        gameTree = new MCTMin(initialState);
+        gameTreeMCT = new MCT(initialState);
     } // reset()
 
     /**
@@ -45,7 +50,8 @@ public class Engine {
         } else {
             state.setBoardFEN(fen);
         } // if/else
-        gameTree = new MCT(state);
+        gameTree = new MCTMin(state);
+        gameTreeMCT = new MCT(state);
     } // setPosition(fen)
 
     /**
@@ -56,7 +62,8 @@ public class Engine {
     public void applyMove(String move) {
         short applyMove = UIUtils.uciToMove(move);
         try {
-            gameTree = new MCT(MoveGen.applyMove(applyMove, gameTree.root.state));
+            gameTree = new MCTMin(MoveGen.applyMove(applyMove, gameTree.root.state));
+            gameTreeMCT = new MCT(MoveGen.applyMove(applyMove, gameTreeMCT.root.state));
         } catch (Exception e) {
         } // try/catch
     } // applyMove(String)
@@ -76,15 +83,30 @@ public class Engine {
         try {
             Duration time;
             if (gameTree.root.state.turnColor) {
-                time = Duration.ofMillis((int) ((wtime - winc) * 0.03) + winc);
+                time = Duration.ofMillis((int) ((wtime - winc) * 0.03) + winc - 200);
             } else {
-                time = Duration.ofMillis((int) ((btime - binc) * 0.03) + binc);
+                time = Duration.ofMillis((int) ((btime - binc) * 0.03) + binc - 200);
             } // if
             if (movetime != 1) {
                 time = Duration.ofMillis(movetime);
             } // if
-            MCTNode bestState = gameTree.search(time, false);
-            return bestState == null ? "0000" : UIUtils.moveToUCI(bestState.move);
+            short move;
+            int compared = Duration.ofMillis(6000).compareTo(time);
+            if (compared < 0) {
+                CNNode bestState = gameTree.search(time, false);
+                if (bestState == null) {
+                    return "0000";
+                }
+                move = bestState.move;
+            } else {
+                MCTNode bestStateMCT = gameTreeMCT.search(time, false);
+                if (bestStateMCT == null) {
+                    return "0000";
+                }
+                move = bestStateMCT.move;
+            }
+            
+            return UIUtils.moveToUCI(move);
         } catch (Exception e) {
             return "0000"; // Fallback to null move
         } // try/catch

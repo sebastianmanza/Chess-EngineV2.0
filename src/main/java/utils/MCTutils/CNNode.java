@@ -8,11 +8,11 @@ import com.google.common.util.concurrent.AtomicDouble;
 import utils.MoveGeneration.GameState;
 
 /**
- * The Nodes that make up the Monte Carlo Tree.
+ * The Nodes that make up the Monte Carlo Tree (Min variation)
  * 
  * @author Sebastian Manza
  */
-public class MCTNode {
+public class CNNode {
     /**
      * The current boardstate
      */
@@ -21,20 +21,20 @@ public class MCTNode {
     /**
      * The list of all possible next nodes
      */
-    public ConcurrentLinkedQueue<MCTNode> nextMoves;
+    public ConcurrentLinkedQueue<CNNode> nextMoves;
     /**
-     * The total wins/draws of the node
+     * The win probability of the node
      */
-    public AtomicDouble wins;
+    public AtomicDouble winProb;
     /**
      * The number of times this was attempted
      */
-    public AtomicInteger playOuts;
+    public AtomicInteger timesAnalyzed;
 
     /**
      * The parent node (last game state)
      */
-    public MCTNode lastMove;
+    public CNNode lastMove;
 
     /** Has the board been given children? */
     public boolean isExpanded;
@@ -42,19 +42,9 @@ public class MCTNode {
     /** The most recent move played */
     public short move;
 
-    public AtomicInteger virtLoss;
+    public AtomicInteger childmaxPlayouts;
 
-    // public final AtomicBoolean inQueue = new AtomicBoolean(false);
-
-    // public boolean tryMarkInQueue() {
-    //     // Atomically mark as in queue if it was not already marked
-    //     return inQueue.compareAndSet(false, true);
-    // }
-
-    // public void unmarkInQueue() {
-    //     // Reset the state to allow re-queuing
-    //     inQueue.set(false);
-    // }
+    public AtomicDouble greatestChild;
 
 
     /**
@@ -63,16 +53,16 @@ public class MCTNode {
      * @param curState   The current board.
      * @param parentNode The node that came before
      */
-    public MCTNode(GameState curState, MCTNode parentNode) {
+    public CNNode(GameState curState, CNNode parentNode) {
         this.state = curState;
-        this.wins = new AtomicDouble(0.0);
-        this.playOuts = new AtomicInteger(0);
+        this.winProb = new AtomicDouble(0.0);
+        this.timesAnalyzed = new AtomicInteger(0);
         this.lastMove = parentNode;
         this.nextMoves = new ConcurrentLinkedQueue<>();
         this.isExpanded = false;
         this.move = 0;
-        this.virtLoss = new AtomicInteger(0);
-
+        this.childmaxPlayouts = new AtomicInteger(0);
+        this.greatestChild = new AtomicDouble(0);
     } // MCNode(Board, MCNode)
 
     /**
@@ -80,8 +70,8 @@ public class MCTNode {
      * 
      * @param childNode The childNode to be added.
      */
-    public void newChild(MCTNode childNode) {
+    public void newChild(CNNode childNode) {
         this.nextMoves.offer(childNode);
-    } // newChild(MCTNode)
+    } // newChild(CNNode)
 
-} // MCTNode
+} // CNNode

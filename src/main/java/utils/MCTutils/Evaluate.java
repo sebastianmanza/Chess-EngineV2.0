@@ -3,7 +3,7 @@ package utils.MCTutils;
 import utils.MoveGeneration.GameState;
 
 /**
- * Heuristically evaluates a position and returns a win chance [0-1]
+ * Heuristically evaluates a position purely based off of material and returns a win chance [0-1]
  * 
  * @author Sebastian Manza
  */
@@ -29,20 +29,21 @@ public class Evaluate {
                 score += 9 * Long.bitCount(state.bitBoards[GameState.WQUEEN])
                                 - 9 * Long.bitCount(state.bitBoards[GameState.BQUEEN]);
 
-                /* Flip the score if the engine is black */
-                if (!state.engineColor) {
-                        score = 0 - score;
-                } // if
+                // /* Flip the score if the engine is black */
+                // if (!state.engineColor) {
+                //         score = 0 - score;
+                // } // if
                 /* Use sigmoid to convert the score to a probability */
-                return sigmoid(score / 5);
+                return sigmoid(score);
         } //evaluate
 
         /**
-         * Apply the sigmoid function to a number
+         * Apply the sigmoid function to a number. It is based off of lichess's calculations
          * @param x the input number
          * @return a scaled function between 0 and 1 representing the win rate
          */
-        public static double sigmoid(double x) {
-                return 1 / (1 + Math.exp(-x));
+        public static double sigmoid(double score) {
+                final double k = 0.00368208;
+                return (0.5 + 0.5 * (2 / (1 + Math.exp(-k * 100 * score)) - 1));
         } //sigmoid
 } //Evaluate

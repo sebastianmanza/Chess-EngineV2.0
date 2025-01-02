@@ -4,6 +4,9 @@ import utils.MoveGeneration.KingMoves;
 import utils.MoveGeneration.MoveGen;
 import utils.MoveGeneration.PawnMoves;
 
+/**
+ * A class containing some basic utils, mainly involving converting moves to UCI format
+ */
 public class UIUtils {
     public static int toSquareIndex(String input) {
         int squareIndex = 0;
