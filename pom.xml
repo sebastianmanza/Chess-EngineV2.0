@@ -21,6 +21,13 @@
         <openblas.version>0.3.19-1.5.7</openblas.version>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
+
     <dependencies>
         <!-- Guava -->
         <dependency>
@@ -30,10 +37,17 @@
         </dependency>
 
         <!-- Logging -->
-        <dependency>
+        <!-- <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
             <version>1.7.30</version>
+        </dependency> -->
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-nop</artifactId>
+            <version>1.7.30</version> <!-- Match the SLF4J version used in your project -->
+            <scope>runtime</scope>
         </dependency>
 
         <!-- EJML -->
@@ -74,6 +88,12 @@
             <groupId>org.bytedeco</groupId>
             <artifactId>openblas-platform</artifactId>
             <version>0.3.19-${javacpp.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.bhlangonijr</groupId>
+            <artifactId>chesslib</artifactId>
+            <version>1.3.4</version>
         </dependency>
     </dependencies>
 
