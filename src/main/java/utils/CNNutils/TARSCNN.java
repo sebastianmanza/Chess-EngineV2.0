@@ -29,7 +29,7 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
  * @author Sebastian Manza
  */
 public class TARSCNN {
-    private static final int INPUT_CHANNELS = 13;
+        private static final int INPUT_CHANNELS = 13;
         private static final int BOARD_DIM = 8;
         private static final int FILTERS = 32;
         private static final int NUM_BLOCKS = 1;
