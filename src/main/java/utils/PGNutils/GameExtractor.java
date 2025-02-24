@@ -19,37 +19,58 @@ public class GameExtractor {
     public static void main(String[] args) {
         try {
             /* Initialize the pgn iterator for the input file */
-            PgnIterator pgnFile = new PgnIterator("lichess_db_standard_rated_2017-01.pgn");
-            BufferedWriter writer = new BufferedWriter(new FileWriter("validation_game_database.csv"));
+            PgnIterator pgnFile = new PgnIterator("lichess_db_standard_rated_2017-02.pgn");
+            BufferedWriter writer = new BufferedWriter(new FileWriter("training_game_database.csv"));
 
+	    BufferedWriter writerValid = new BufferedWriter(new FileWriter("validation_game_database.csv"));
             int gamesProcessed = 0;
 
             for (Game game : pgnFile) {
-                if (gamesProcessed > 1000000) {
+                if (gamesProcessed <= 8000000) {
+		int startMove = gamesProcessed / 100000;
                 List<String[]> fenEvalPairs = processGame(game);
+		int written = 0;
                 for (String[] pair : fenEvalPairs) {
-                    writer.write(pair[0] + "," + pair[1]);
-                    writer.newLine();
+                    if (written >= startMove) {
+		    	writer.write(pair[0] + "," + pair[1]);
+                    	writer.newLine();
+		    }
+		    written++;
                 }
-
-                System.out.print("\rProcessed games: " + gamesProcessed);
-            }
+		
+		if (gamesProcessed % 100000 == 0) {
+ 	               System.out.print("\rProcessed games: " + gamesProcessed);
+		}         
+	    }
             gamesProcessed++;
-                if (gamesProcessed >= 1200000) {
-                    break;
+                if (gamesProcessed >= 8000000) {
+		int startMoveValidation = (gamesProcessed - 8000000) / 20000;
+		List<String[]> fenEvalPairs = processGame(game);
+		    int writtenVal = 0;
+                for (String[] pair : fenEvalPairs) {
+		    if (writtenVal >= startMoveValidation) {
+                    	writerValid.write(pair[0] + "," + pair[1]);
+                    	writerValid.newLine();
+		    }
+		    writtenVal++;
+                }
+		   if (gamesProcessed >= 9000000){
+                      break;
+                	}
                 }
             }
             System.out.println();
 
             writer.close();
-            System.out.println("Processing complete. Data saved to validation_game_database.csv.");
+            writerValid.close();
+
+            System.out.println("Processing complete. Data saved to training_game_database.csv.");
 
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    
     private static List<String[]> processGame(Game game) {
         List<String[]> fenEvalPairs = new ArrayList<>();
         Board board = new Board();

@@ -22,10 +22,12 @@
     </properties>
 
     <repositories>
+
         <repository>
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>
+
     </repositories>
 
     <dependencies>
@@ -37,18 +39,18 @@
         </dependency>
 
         <!-- Logging -->
-        <!-- <dependency>
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
             <version>1.7.30</version>
-        </dependency> -->
+        </dependency> 
 
-        <dependency>
+        <!-- <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-nop</artifactId>
-            <version>1.7.30</version> <!-- Match the SLF4J version used in your project -->
+            <version>1.7.30</version>
             <scope>runtime</scope>
-        </dependency>
+        </dependency> -->
 
         <!-- EJML -->
         <dependency>
@@ -64,12 +66,16 @@
         </dependency>
 
         <!-- ND4J Native Backend (macOS ARM64) -->
-        <dependency>
+        <!-- <dependency>
             <groupId>org.nd4j</groupId>
             <artifactId>nd4j-native</artifactId>
             <version>${nd4j.version}</version>
-        </dependency>
-
+        </dependency>-->
+	<dependency>
+    		<groupId>org.nd4j</groupId>
+    		<artifactId>nd4j-cuda-11.6-platform</artifactId>
+    		<version>${nd4j.version}</version>
+	</dependency>
         <!-- JavaCPP (Required for Native Bindings) -->
         <dependency>
             <groupId>org.bytedeco</groupId>
@@ -112,7 +118,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <mainClass>engine.TARSUCI</mainClass>
+                    <mainClass>engine.TARSZeroTrainer</mainClass>
                 </configuration>
             </plugin>
 
@@ -124,7 +130,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>engine.TARSUCI</mainClass>
+                            <mainClass>engine.TARSZeroTrainer</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -138,7 +144,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>engine.TARSUCI</mainClass>
+                            <mainClass>engine.TARSZeroTrainer</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
@@ -167,6 +173,14 @@
                     </forkedProcessArguments>
                 </configuration>
             </plugin>
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-compiler-plugin</artifactId>
+    <version>3.10.1</version> <!-- Ensure this is 3.10.1 or later -->
+    <configuration>
+        <release>21</release> <!-- Preferred for Java 9 and above -->
+    </configuration>
+</plugin>
         </plugins>
     </build>
 </project>

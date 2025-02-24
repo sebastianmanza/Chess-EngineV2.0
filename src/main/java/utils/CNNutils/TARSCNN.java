@@ -138,12 +138,10 @@ public class TARSCNN {
         //                 .build())
         //         .setInputType(InputType.convolutional(8, 8, 13))
         //         .build();
-
-        
         ComputationGraphConfiguration configComplex = buildGraphConfiguration();
 
         ComputationGraph model = new ComputationGraph(configComplex);
-        //MultiLayerNetwork model = new MultiLayerNetwork(config);
+        //MultiLayerNetworkmodel = new MultiLayerNetwork(config);
         model.init();
         return model;
     } // BuildCNN()
